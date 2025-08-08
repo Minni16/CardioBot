@@ -1,0 +1,471 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block body %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+<style>
+    .heart-form-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .heart-form-title {
+        font-size: 2em;
+        font-weight: 700;
+        color: #1A3C34;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .heart-form-subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 30px;
+    }
+    .form-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    .section-title {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: #1A3C34;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #00C4B4;
+    }
+    .heart-form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    .heart-form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    .heart-form-group label {
+        font-weight: 600;
+        color: #1A3C34;
+        margin-bottom: 8px;
+    }
+    .heart-form-group small {
+        color: #666;
+        margin-top: 4px;
+        font-size: 0.85em;
+    }
+    .heart-form-group input,
+    .heart-form-group select,
+    .heart-form-group textarea {
+        padding: 10px;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1em;
+        transition: all 0.3s ease;
+    }
+    .heart-form-group input:focus,
+    .heart-form-group select:focus,
+    .heart-form-group textarea:focus {
+        border-color: #00C4B4;
+        box-shadow: 0 0 0 2px rgba(0,196,180,0.1);
+        outline: none;
+    }
+    .heart-form-submit {
+        text-align: center;
+        margin-top: 30px;
+    }
+    .heart-form-btn {
+        background: linear-gradient(90deg, #00C4B4, #1A3C34);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .heart-form-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,196,180,0.2);
+    }
+    @media (max-width: 768px) {
+        .heart-form-container {
+            margin: 20px;
+            padding: 20px;
+        }
+        
+        .heart-form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="heart-form-container">
+    <div class="heart-form-title">Add Heart Detail</div>
+    <div class="heart-form-subtitle">Please fill in all fields carefully. The accuracy of the prediction depends on the accuracy of your input data.</div>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Patient Information -->
+        <div class="form-section">
+            <div class="section-title">Patient Information</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label for="patient_name">Patient Name</label>
+                    <input type="text" id="patient_name" name="patient_name" placeholder="Enter patient's full name" required>
+                </div>
+                <div class="heart-form-group">
+                    <label for="patient_contact">Patient Contact</label>
+                    <input type="text" id="patient_contact" name="patient_contact" placeholder="Enter patient's contact number" required>
+                    <small>10-digit phone number</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="form-section">
+            <div class="section-title">Basic Information</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>Age <small>(in years)</small></label>
+                    <input type="number" name="age" placeholder="20-100" min="1" max="120" required>
+                    <small>Patient's age in years</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Sex</label>
+                    <select name="sex" required>
+                        <option value="">Select gender</option>
+                        <option value="1">Male</option>
+                        <option value="0">Female</option>
+                    </select>
+                    <small>Patient's biological sex</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vital Signs -->
+        <div class="form-section">
+            <div class="section-title">Vital Signs</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>Resting Blood Pressure <small>(mm Hg)</small></label>
+                    <input type="number" name="trestbps" placeholder="90-200" min="90" max="200" required>
+                    <small>Blood pressure while resting (systolic)</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Cholesterol <small>(mg/dl)</small></label>
+                    <input type="number" name="chol" placeholder="100-600" min="100" max="600" required>
+                    <small>Serum cholesterol in mg/dl</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Fasting Blood Sugar</label>
+                    <select name="fbs" required>
+                        <option value="">Select option</option>
+                        <option value="1">Greater than 120 mg/dl</option>
+                        <option value="0">Less than or equal to 120 mg/dl</option>
+                    </select>
+                    <small>Blood sugar level after fasting</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Max Heart Rate</label>
+                    <input type="number" name="thalach" placeholder="60-220" min="60" max="220" required>
+                    <small>Maximum heart rate achieved during exercise</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cardiac Assessment -->
+        <div class="form-section">
+            <div class="section-title">Cardiac Assessment</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>Chest Pain Type</label>
+                    <select name="cp" required>
+                        <option value="">Select type</option>
+                        <option value="1">Typical angina</option>
+                        <option value="2">Atypical angina</option>
+                        <option value="3">Non-anginal pain</option>
+                        <option value="4">Asymptomatic</option>
+                    </select>
+                    <small>Type of chest pain experienced</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Resting ECG</label>
+                    <select name="restecg" required>
+                        <option value="">Select result</option>
+                        <option value="0">Normal</option>
+                        <option value="1">ST-T wave abnormality</option>
+                        <option value="2">Left ventricular hypertrophy</option>
+                    </select>
+                    <small>ECG results at rest</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Exercise Induced Angina</label>
+                    <select name="exang" required>
+                        <option value="">Select option</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                    <small>Angina induced by exercise</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>ST Depression (Oldpeak)</label>
+                    <input type="number" name="oldpeak" placeholder="0-6.2" step="0.1" min="0" max="10" required>
+                    <small>ST depression induced by exercise relative to rest</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Assessment -->
+        <div class="form-section">
+            <div class="section-title">Advanced Assessment</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>Slope</label>
+                    <select name="slope" required>
+                        <option value="">Select type</option>
+                        <option value="1">Upsloping</option>
+                        <option value="2">Flat</option>
+                        <option value="3">Downsloping</option>
+                    </select>
+                    <small>Slope of peak exercise ST segment</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Number of Vessels</label>
+                    <select name="ca" required>
+                        <option value="">Select number</option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                    <small>Number of major vessels colored by fluoroscopy</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Thalassemia</label>
+                    <select name="thal" required>
+                        <option value="">Select type</option>
+                        <option value="2">Normal</option>
+                        <option value="1">Fixed defect</option>
+                        <option value="3">Reversible defect</option>
+                    </select>
+                    <small>Blood disorder type</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Notes -->
+        <div class="form-section">
+            <div class="section-title">Additional Notes</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group" style="grid-column: 1 / -1;">
+                    <label for="notes">Clinical Notes</label>
+                    <textarea name="notes" id="notes" rows="3" placeholder="Enter any additional clinical observations or notes"></textarea>
+                    <small>Optional: Add any relevant clinical notes or observations</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="heart-form-submit">
+            <button type="submit" class="heart-form-btn">Submit Assessment</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const submitBtn = document.querySelector('.heart-form-btn');
+    
+    // Add input validation
+    const inputs = form.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        // Add validation classes on blur
+        input.addEventListener('blur', function() {
+            validateField(this);
+        });
+        
+        // Real-time validation for number inputs
+        if (input.type === 'number') {
+            input.addEventListener('input', function() {
+                validateNumberInput(this);
+            });
+        }
+    });
+    
+    // Form submission handler
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Validate all fields before submission
+        let isValid = true;
+        inputs.forEach(input => {
+            if (!validateField(input)) {
+                isValid = false;
+            }
+        });
+        
+        if (!isValid) {
+            showError('Please fill in all required fields correctly.');
+            return;
+        }
+        
+        // Disable submit button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        
+        try {
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showSuccess('Prediction completed successfully!');
+                // Handle successful prediction
+                if (result.prediction !== undefined) {
+                    const predictionText = result.prediction === 1 ? 
+                        'Low Risk of Heart Disease.' : 'High Risk of Heart Disease!!!';
+                    // const accuracy = result.accuracy ? ` (${result.accuracy.toFixed(2)}% accuracy)` : '';
+                    showPredictionResult(predictionText);
+                }
+            } else {
+                throw new Error(result.error || 'An error occurred during prediction');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError(error.message || 'Failed to process your request. Please try again.');
+        } finally {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Submit Assessment';
+        }
+    });
+    
+    // Field validation function
+    function validateField(field) {
+        if (field.required && !field.value.trim()) {
+            setInvalid(field, 'This field is required');
+            return false;
+        }
+        
+        if (field.type === 'number') {
+            return validateNumberInput(field);
+        }
+        
+        setValid(field);
+        return true;
+    }
+    
+    // Number input validation
+    function validateNumberInput(input) {
+        const value = parseFloat(input.value);
+        const min = parseFloat(input.min) || -Infinity;
+        const max = parseFloat(input.max) || Infinity;
+        
+        if (isNaN(value) || value < min || value > max) {
+            setInvalid(input, `Please enter a value between ${min} and ${max}`);
+            return false;
+        }
+        
+        setValid(input);
+        return true;
+    }
+    
+    // Set field as invalid
+    function setInvalid(field, message) {
+        field.classList.add('is-invalid');
+        field.classList.remove('is-valid');
+        
+        // Show error message
+        let errorElement = field.nextElementSibling;
+        if (!errorElement || !errorElement.classList.contains('error-message')) {
+            errorElement = document.createElement('div');
+            errorElement.className = 'error-message';
+            field.parentNode.insertBefore(errorElement, field.nextSibling);
+        }
+        errorElement.textContent = message;
+        errorElement.style.color = '#e74c3c';
+        errorElement.style.fontSize = '0.85em';
+        errorElement.style.marginTop = '4px';
+    }
+    
+    // Set field as valid
+    function setValid(field) {
+        field.classList.remove('is-invalid');
+        field.classList.add('is-valid');
+        
+        // Remove error message if exists
+        const errorElement = field.nextElementSibling;
+        if (errorElement && errorElement.classList.contains('error-message')) {
+            errorElement.remove();
+        }
+    }
+    
+    // Show success message
+    function showSuccess(message) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: message,
+            confirmButtonColor: '#00C4B4',
+        });
+    }
+    
+    // Show error message
+    function showError(message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: message,
+            confirmButtonColor: '#e74c3c',
+        });
+    }
+    
+    // Show prediction result
+    function showPredictionResult(message) {
+        Swal.fire({
+            title: 'Prediction Result',
+            html: `<div style="font-size: 1.2em; margin: 20px 0;">${message}</div>`,
+            icon: 'info',
+            confirmButtonColor: '#00C4B4',
+            confirmButtonText: 'OK',
+        });
+    }
+});
+</script>
+
+<style>
+/* Add some basic styles for validation states */
+.heart-form-group input.is-valid,
+.heart-form-group select.is-valid {
+    border-color: #2ecc71 !important;
+    background-color: #f8fff9 !important;
+}
+
+.heart-form-group input.is-invalid,
+.heart-form-group select.is-invalid {
+    border-color: #e74c3c !important;
+    background-color: #fff9f9 !important;
+}
+</style>
+
+{% endblock %}

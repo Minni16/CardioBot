@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Heart Disease Prediction Result</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Prediction Result -->
+                    <div class="text-center mb-4">
+                        {% if prediction == 1 %}
+                            <div class="alert alert-danger" role="alert">
+                                <h4 class="alert-heading">High Risk of Heart Disease Detected</h4>
+                                <p>Based on the provided information, there is a high probability of heart disease.</p>
+                                <hr>
+                                <p class="mb-0">Confidence: {{ confidence|floatformat:1 }}% | Model Accuracy: {{ accuracy|floatformat:1 }}%</p>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success" role="alert">
+                                <h4 class="alert-heading">Low Risk of Heart Disease</h4>
+                                <p>Based on the provided information, there is a low probability of heart disease.</p>
+                                <hr>
+                                <p class="mb-0">Confidence: {{ confidence|floatformat:1 }}% | Model Accuracy: {{ accuracy|floatformat:1 }}%</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Risk Factors -->
+                    {% if risk_factors %}
+                    <div class="mb-4">
+                        <h5>Key Risk Factors Identified:</h5>
+                        <ul class="list-group">
+                            {% for factor in risk_factors %}
+                                <li class="list-group-item">{{ factor }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Input Summary -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Your Input Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <ul class="list-group list-group-flush">
+                                    {% for key, value in formatted_heart_values.items %}
+                                        <li class="list-group-item"><strong>{{ key }}:</strong> {{ value }}</li>
+                                    {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="alert alert-info">
+                        <h5>Recommendations:</h5>
+                        <ul class="mb-0">
+                            {% if prediction == 1 %}
+                                <li>Please consult a cardiologist as soon as possible for a thorough evaluation.</li>
+                                <li>Follow up with your primary care physician to discuss these results.</li>
+                                <li>Consider lifestyle changes such as a heart-healthy diet and regular exercise.</li>
+                            {% else %}
+                                <li>Continue with regular health check-ups and maintain a healthy lifestyle.</li>
+                                <li>Consider preventive measures such as a balanced diet and regular exercise.</li>
+                            {% endif %}
+                            <li>This prediction is not a substitute for professional medical advice.</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'add_heartdetail' %}" class="btn btn-primary">
+                            <i class="fas fa-redo"></i> Make Another Prediction
+                        </a>
+                        <a href="{% url 'patient_home' %}" class="btn btn-secondary">
+                            <i class="fas fa-home"></i> Return to Dashboard
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <small>
+                        Prediction ID: #{{ search_id|default:"N/A" }} | 
+                        Date: {% now "F j, Y H:i" %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any client-side interactivity here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Example: Print the page
+        // window.print();
+    });
+</script>
+{% endblock %}

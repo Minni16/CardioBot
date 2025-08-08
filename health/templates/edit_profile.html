@@ -1,0 +1,141 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block body %}
+	<!-- register -->
+{% if terror == "create" %}
+<script>
+    alert('Detailed Updated Successfully');
+    window.location="{% url 'profile_doctor' %}";
+</script>
+{% endif %}
+
+<style>
+    .edit-profile-container {
+        max-width: 700px;
+        margin: 60px auto;
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        padding: 40px 30px 30px 30px;
+    }
+    .edit-profile-title {
+        text-align: center;
+        font-size: 2em;
+        font-weight: 700;
+        color: #1A3C34;
+        margin-bottom: 30px;
+        letter-spacing: 1px;
+    }
+    .edit-profile-form label {
+        font-weight: 600;
+        color: #00C4B4;
+        margin-bottom: 6px;
+        letter-spacing: 0.5px;
+    }
+    .edit-profile-form .form-control {
+        border-radius: 10px;
+        border: 1.5px solid #e0e0e0;
+        padding: 12px 14px;
+        font-size: 1em;
+        color: #1A3C34;
+        background: #f9f9f9;
+        transition: border-color 0.3s, box-shadow 0.3s;
+        margin-bottom: 18px;
+    }
+    .edit-profile-form .form-control:focus {
+        border-color: #00C4B4;
+        background: #fff;
+        box-shadow: 0 0 0 2px rgba(0,196,180,0.10);
+        outline: none;
+    }
+    .edit-profile-form .form-group.row {
+        margin-bottom: 0;
+    }
+    .edit-profile-form .profile-image-preview {
+        width: 100%;
+        max-width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid #00C4B4;
+        box-shadow: 0 2px 8px rgba(0,196,180,0.10);
+        margin-top: 10px;
+        background: #f8f9fa;
+    }
+    .edit-profile-form .btn-submit {
+        background: linear-gradient(90deg, #00C4B4, #1A3C34);
+        color: white;
+        border: none;
+        padding: 15px 0;
+        border-radius: 10px;
+        width: 100%;
+        font-weight: 600;
+        font-size: 1.1em;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        margin-top: 20px;
+        letter-spacing: 1px;
+    }
+    .edit-profile-form .btn-submit:hover, .edit-profile-form .btn-submit:focus {
+        background: #00C4B4;
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(0,196,180,0.15);
+        outline: none;
+    }
+    @media (max-width: 600px) {
+        .edit-profile-container { padding: 20px 5px; }
+    }
+</style>
+
+<div class="edit-profile-container">
+    <div class="edit-profile-title">Update My Detail</div>
+    <form class="edit-profile-form" action="" method="post" enctype="multipart/form-data">
+					{% csrf_token %}
+					<div class="form-group row">
+						<div class="col-md-6">
+						<label>First Name</label>
+						<input type="text" class="form-control" value="{{doc.user.first_name}}" name="fname" placeholder="First Name" required="">
+						</div>
+						<div class="col-md-6">
+						<label>Last Name</label>
+						<input type="text" class="form-control" value="{{doc.user.last_name}}" name="lname" placeholder="Last Name" required="">
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-md-6">
+						<label>Email</label>
+						<input type="email" class="form-control" value="{{doc.user.email}}" name="email" placeholder="Enter Email" required="">
+						</div>
+						<div class="col-md-6">
+						<label>Contact</label>
+						<input type="text" class="form-control" name="contact" value="{{doc.contact}}" placeholder="Enter Contact" required="">
+						</div>
+					</div>
+					{% if error != "pat" %}
+					<div class="form-group row">
+						<div class="col-md-12">
+						<label>Specialist</label>
+							<input name="type" class="form-control" value="{{doc.category}}">
+						</div>
+					</div>
+					{% endif %}
+					<div class="form-group row">
+						<div class="col-md-6">
+						<label class="mb-2">City</label>
+						<input type="text" class="form-control" value="{{doc.address}}" name="add" id="password1" placeholder="Enter Address" required="">
+						</div>
+						<div class="col-md-4">
+						<label>Image</label>
+						<input type="file" class="form-control" name="image">
+                <div style="text-align:center; margin-top: 10px;">
+                    <span style="display:block; color:#00C4B4; font-weight:600; font-size:0.98em; margin-bottom:6px;">Current Photo</span>
+                    <img src="{{doc.image.url}}" class="profile-image-preview" alt="Current Photo">
+						</div>
+						</div>
+					</div>
+        <button type="submit" class="btn-submit">Update Detail</button>
+				</form>
+			</div>
+	<!-- //register -->
+
+{% endblock %}

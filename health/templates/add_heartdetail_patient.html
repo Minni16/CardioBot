@@ -1,0 +1,389 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block body %}
+<style>
+    .heart-form-container {
+        max-width: 1100px;
+        width: 95%;
+        margin: 40px auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
+        padding: clamp(20px, 5vw, 40px) clamp(16px, 4vw, 36px);
+    }
+
+    .heart-form-title {
+        text-align: center;
+        font-size: clamp(1.5em, 4vw, 2em);
+        font-weight: 700;
+        color: #1A3C34;
+        margin-bottom: clamp(12px, 3vw, 18px);
+        letter-spacing: 1px;
+    }
+
+    .heart-form-subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: clamp(20px, 4vw, 30px);
+        font-size: clamp(0.9em, 2.5vw, 1.1em);
+        padding: 0 10px;
+    }
+
+    .form-section {
+        background: #f9f9f9;
+        border-radius: 15px;
+        padding: clamp(16px, 4vw, 24px);
+        margin-bottom: clamp(16px, 4vw, 24px);
+    }
+
+    .section-title {
+        color: #00C4B4;
+        font-size: clamp(1em, 3vw, 1.2em);
+        font-weight: 600;
+        margin-bottom: clamp(16px, 3vw, 20px);
+        border-bottom: 2px solid #e0f7f6;
+        padding-bottom: clamp(8px, 2vw, 10px);
+    }
+
+    .heart-form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+        gap: clamp(16px, 3vw, 24px) clamp(12px, 2vw, 18px);
+    }
+
+    .form-section:nth-child(5) .heart-form-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    }
+
+    @media (max-width: 768px) {
+        .form-section:nth-child(5) .heart-form-group {
+            grid-column: 1 / -1 !important;
+        }
+        
+        .heart-form-group input,
+        .heart-form-group select {
+            font-size: 16px; /* Prevents zoom on mobile */
+        }
+    }
+
+    .heart-form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .heart-form-group label {
+        font-weight: 600;
+        color: #1A3C34;
+        margin-bottom: clamp(6px, 1.5vw, 8px);
+        font-size: clamp(0.9em, 2.5vw, 1em);
+    }
+
+    .heart-form-group input,
+    .heart-form-group select {
+        border-radius: 10px;
+        border: 1.5px solid #e0e0e0;
+        padding: clamp(10px, 2vw, 12px);
+        font-size: clamp(0.9em, 2.5vw, 1em);
+        color: #1A3C34;
+        background: white;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .heart-form-group small {
+        color: #666;
+        font-size: clamp(0.8em, 2vw, 0.9em);
+        margin-top: clamp(3px, 1vw, 4px);
+    }
+
+    .heart-form-submit {
+        display: flex;
+        justify-content: center;
+        margin-top: clamp(24px, 5vw, 30px);
+    }
+
+    .heart-form-btn {
+        background: linear-gradient(90deg, #00C4B4, #1A3C34);
+        color: white;
+        border: none;
+        padding: clamp(12px, 3vw, 15px) clamp(30px, 5vw, 40px);
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: clamp(1em, 2.5vw, 1.1em);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(.4, 2, .6, 1);
+        letter-spacing: 1px;
+        width: min(100%, 300px);
+    }
+
+    .heart-form-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,196,180,0.2);
+    }
+
+    @media (max-width: 480px) {
+        .heart-form-container {
+            margin: 20px auto;
+            border-radius: 15px;
+        }
+
+        .form-section {
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .heart-form-grid {
+            gap: 16px 12px;
+        }
+    }
+
+    /* Add smooth scrolling for better mobile experience */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Improve touch targets on mobile */
+    @media (hover: none) {
+        .heart-form-btn {
+            padding: 16px 40px;
+        }
+        
+        .heart-form-group input,
+        .heart-form-group select {
+            padding: 14px;
+        }
+    }
+</style>
+
+<div class="heart-form-container">
+    <div class="heart-form-title">Heart Health Assessment</div>
+    <div class="heart-form-subtitle">Please fill out this form to help us assess your heart health risk factors</div>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Personal Information -->
+        <div class="form-section">
+            <div class="section-title">Personal Information</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="full_name" value="{{ patient_name }}" required>
+                </div>
+                <div class="heart-form-group">
+                    <label>Age</label>
+                    <input type="number" name="age" value="{{ patient_age }}" min="1" max="120" required>
+                </div>
+                <div class="heart-form-group">
+                    <label>Sex</label>
+                    <select name="sex" required>
+                        <option value="">Select gender</option>
+                        <option value="1">Male</option>
+                        <option value="0">Female</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Physical Measurements -->
+        <div class="form-section">
+            <div class="section-title">Physical Measurements</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>Height (cm)</label>
+                    <input type="number" name="height" min="100" max="250" step="1" required>
+                    <small>Your height in centimeters</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Weight (kg)</label>
+                    <input type="number" name="weight" min="30" max="300" step="1" required>
+                    <small>Your weight in kilograms</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health History -->
+        <div class="form-section">
+            <div class="section-title">Health History</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>Do you smoke?</label>
+                    <select name="smoking" id="smoking" required onchange="handleSmokingChange()">
+                        <option value="">Select option</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+                <div class="heart-form-group">
+                    <label>How long have you been smoking?</label>
+                    <input type="number" name="time_of_smoking" id="time_of_smoking" min="0" step="1" required>
+                    <small>In years</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>How often do you smoke in a day?</label>
+                    <input type="number" name="frequency_of_smoking" id="frequency_of_smoking" min="0" step="1" required>
+                    <small>In cigarettes</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Do you have high blood pressure?</label>
+                    <select name="hypertension" required>
+                        <option value="">Select option</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                        <option value="2">Not sure</option>
+                    </select>
+                </div>
+                <div class="heart-form-group">
+                    <label>Do you have diabetes?</label>
+                    <select name="diabetes" required>
+                        <option value="">Select option</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                        <option value="2">Not sure</option>
+                    </select>
+                </div>
+                <div class="heart-form-group">
+                    <label>Do you have high cholesterol?</label>
+                    <select name="high_cholesterol" required>
+                        <option value="">Select option</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                        <option value="2">Not sure</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Family History -->
+        <div class="form-section">
+            <div class="section-title">Family History</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>Has any close family member had heart disease?</label>
+                    <select name="family_history" required>
+                        <option value="">Select option</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                        <option value="2">Not sure</option>
+                    </select>
+                    <small>Parents, siblings, or grandparents</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Symptoms -->
+        <div class="form-section">
+            <div class="section-title">Current Symptoms</div>
+            <div class="heart-form-grid" style="grid-template-columns: 1fr 1fr;">
+                <!-- Chest Pain Pair -->
+                <div class="heart-form-group" style="grid-column: 1;">
+                    <label>Have you experienced chest pain or discomfort recently?</label>
+                    <select name="chest_pain" required>
+                        <option value="">Select frequency</option>
+                        <option value="0">Never</option>
+                        <option value="1">Rarely</option>
+                        <option value="2">Sometimes</option>
+                        <option value="3">Often</option>
+                    </select>
+                </div>
+                <div class="heart-form-group" style="grid-column: 2;">
+                    <label>What was the severity of the chest pain?</label>
+                    <select name="chest_pain_severity" required>
+                        <option value="">Select severity</option>
+                        <option value="0">Mild</option>
+                        <option value="1">Low-Moderate</option>
+                        <option value="2">Moderate</option>
+                        <option value="3">High-Moderate</option>
+                        <option value="4">Severe</option>
+                    </select>
+                </div>
+                <!-- Shortness of Breath Pair -->
+                <div class="heart-form-group" style="grid-column: 1;">
+                    <label>Do you feel short of breath during light activity?</label>
+                    <select name="shortness_of_breath" required>
+                        <option value="">Select frequency</option>
+                        <option value="0">Never</option>
+                        <option value="1">Rarely</option>
+                        <option value="2">Sometimes</option>
+                        <option value="3">Often</option>
+                    </select>
+                    <small>Like walking or climbing stairs</small>
+                </div>
+                <div class="heart-form-group" style="grid-column: 2;">
+                    <label>How long do you feel short of breath?</label>
+                    <select name="shortness_of_breath_duration" required>
+                        <option value="">Select minutes</option>
+                        <option value="0">0 minute</option>
+                        <option value="1">1-5 minutes</option>
+                        <option value="2">6-15 minutes</option>
+                        <option value="3">16-30 minutes</option>
+                        <option value="4">31-60 minutes</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lifestyle -->
+        <div class="form-section">
+            <div class="section-title">Lifestyle Habits</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>How often do you exercise?</label>
+                    <select name="physical_activity" required>
+                        <option value="">Select frequency</option>
+                        <option value="0">Never</option>
+                        <option value="1">Rarely (1-2 times/month)</option>
+                        <option value="2">Sometimes (1-2 times/week)</option>
+                        <option value="3">Regularly (3+ times/week)</option>
+                    </select>
+                </div>
+                <div class="heart-form-group">
+                    <label>How often do you eat fried or fatty foods?</label>
+                    <select name="diet_habits" required>
+                        <option value="">Select frequency</option>
+                        <option value="0">Rarely (less than weekly)</option>
+                        <option value="1">Sometimes (1-2 times/week)</option>
+                        <option value="2">Often (3-5 times/week)</option>
+                        <option value="3">Very Often (daily)</option>
+                    </select>
+                </div>
+                <div class="heart-form-group">
+                    <label>How often do you feel stressed?</label>
+                    <select name="stress_level" required>
+                        <option value="">Select frequency</option>
+                        <option value="0">Rarely (less than weekly)</option>
+                        <option value="1">Sometimes (1-2 times/week)</option>
+                        <option value="2">Often (3-5 times/week)</option>
+                        <option value="3">Very Often (daily)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="heart-form-submit">
+            <button type="submit" class="heart-form-btn">Submit Health Assessment</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function handleSmokingChange() {
+    const smokingSelect = document.getElementById('smoking');
+    const timeOfSmoking = document.getElementById('time_of_smoking');
+    const frequencyOfSmoking = document.getElementById('frequency_of_smoking');
+    
+    if (smokingSelect.value === '0') {  // If "No" is selected
+        timeOfSmoking.value = '0';
+        frequencyOfSmoking.value = '0';
+        timeOfSmoking.disabled = true;
+        frequencyOfSmoking.disabled = true;
+    } else {  // If "Yes" is selected or no option selected
+        timeOfSmoking.disabled = false;
+        frequencyOfSmoking.disabled = false;
+    }
+}
+
+// Call on page load to set initial state
+document.addEventListener('DOMContentLoaded', handleSmokingChange);
+</script>
+{% endblock %}

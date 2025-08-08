@@ -1,0 +1,143 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/about.css' %}">
+<style>
+    /* Responsive styles */
+    @media (max-width: 768px) {
+        .about-hero {
+            padding: 2rem 0 !important;
+        }
+        .about-hero h1 {
+            font-size: 2rem !important;
+        }
+        .about-hero .lead {
+            font-size: 1rem;
+        }
+        .section-title {
+            font-size: 1.75rem;
+        }
+        .card {
+            margin-bottom: 1rem;
+        }
+        .technology .col-lg-6:first-child {
+            margin-bottom: 2rem;
+        }
+        .cta .btn {
+            width: 100%;
+            margin-bottom: 1rem;
+            padding: 12px 30px !important;
+        }
+    }
+    @media (min-width: 769px) {
+        .cta .btn {
+            padding: 15px 40px !important;
+        }
+    }
+</style>
+{% endblock %}
+{% block body %}
+
+<!-- Hero Section -->
+<section class="about-hero py-5">
+	<div class="container py-3 py-md-5">
+		<div class="row align-items-center">
+			<div class="col-12 col-lg-8 mx-auto text-center text-white px-3">
+				            <h1 class="display-4 font-weight-bold mb-3 mb-md-4">Revolutionizing Heart Health with CardioBot</h1>
+				<p class="lead" style="color: #fff;">Using cutting-edge machine learning to predict and prevent heart diseases before they become critical.</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Mission Section -->
+<section class="mission py-4 py-md-5 bg-light">
+	<div class="container">
+		<div class="row">
+			<div class="col-12 col-lg-8 mx-auto text-center px-3">
+				<h2 class="section-title mb-3 mb-md-4">Our Mission</h2>
+				<p class="lead" style="color: black;">We're on a mission to transform healthcare through artificial intelligence, making heart disease prediction accessible, accurate, and actionable for everyone.</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Features Section -->
+<section class="features py-4 py-md-5">
+	<div class="container">
+		<h2 class="text-center mb-4 mb-md-5">Why Choose Our System?</h2>
+		<div class="row g-4">
+			<div class="col-12 col-md-4">
+				<div class="card h-100 border-0 shadow-sm">
+					<div class="card-body text-center p-3 p-md-4">
+						<i class="fas fa-brain fa-2x fa-md-3x text-primary mb-3"></i>
+						<h4 class="card-title h5">Advanced AI Technology</h4>
+						<p class="card-text small" style="color: black;">Utilizing state-of-the-art machine learning algorithms to provide accurate predictions and insights.</p>
+					</div>
+				</div>
+			</div>
+			<div class="col-12 col-md-4">
+				<div class="card h-100 border-0 shadow-sm">
+					<div class="card-body text-center p-3 p-md-4">
+						<i class="fas fa-heartbeat fa-2x fa-md-3x text-danger mb-3"></i>
+						<h4 class="card-title h5">Early Detection</h4>
+						<p class="card-text small" style="color: black;">Identify potential heart conditions early, enabling proactive healthcare decisions and better outcomes.</p>
+					</div>
+				</div>
+			</div>
+			<div class="col-12 col-md-4">
+				<div class="card h-100 border-0 shadow-sm">
+					<div class="card-body text-center p-3 p-md-4">
+						<i class="fas fa-user-md fa-2x fa-md-3x text-success mb-3"></i>
+						<h4 class="card-title h5">Doctor-Friendly</h4>
+						<p class="card-text small" style="color: black;">Designed to assist healthcare professionals in making informed decisions with comprehensive data analysis.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Technology Section -->
+<section class="technology py-4 py-md-5 bg-light">
+	<div class="container">
+		<div class="row align-items-center">
+			<div class="col-12 col-lg-6 mb-4 mb-lg-0">
+				<h2 class="h3 mb-3 mb-md-4">Powered by Machine Learning</h2>
+				<p class="lead mb-3 mb-md-4" style="color: black;">Our system leverages advanced machine learning algorithms to analyze various health parameters and provide accurate predictions about potential heart conditions.</p>
+				<ul class="list-unstyled">
+					<li class="mb-2 mb-md-3"><i class="fas fa-check-circle text-success mr-2"></i> Real-time analysis of health metrics</li>
+					<li class="mb-2 mb-md-3"><i class="fas fa-check-circle text-success mr-2"></i> Continuous learning and improvement</li>
+					<li class="mb-2 mb-md-3"><i class="fas fa-check-circle text-success mr-2"></i> High accuracy predictions</li>
+					<li class="mb-2 mb-md-3"><i class="fas fa-check-circle text-success mr-2"></i> User-friendly interface</li>
+				</ul>
+			</div>
+			<div class="col-12 col-lg-6">
+				<img src="{% static 'images/heart-bg.jpg' %}" alt="Machine Learning in Healthcare" class="img-fluid rounded shadow w-100">
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Call to Action -->
+<section class="cta py-4 py-md-5 text-center">
+	<div class="container">
+		{% if user.is_authenticated %}
+			{% if user.doctor_set.all %}
+				<h2 class="h3 mb-3 mb-md-4">Make a Heart Disease Prediction</h2>
+				<p class="lead mb-3 mb-md-4">Use our advanced AI system to analyze patient data and predict potential heart conditions.</p>
+				<a href="{% url 'add_heartdetail' %}" class="btn btn-primary btn-lg w-100 w-md-auto" style="transition: all 0.5s cubic-bezier(.4,2,.6,1);">Start Prediction</a>
+			{% elif user.patient_set.all %}
+				<h2 class="h3 mb-3 mb-md-4">Check Your Heart Health</h2>
+				<p class="lead mb-3 mb-md-4">Get an instant assessment of your heart health using our advanced prediction system.</p>
+				<a href="{% url 'add_heartdetail_patient' %}" class="btn btn-primary btn-lg w-100 w-md-auto" style="transition: all 0.5s cubic-bezier(.4,2,.6,1);">Start Assessment</a>
+			{% endif %}
+		{% else %}
+			<h2 class="h3 mb-3 mb-md-4">Ready to Take Control of Your Heart Health?</h2>
+			<p class="lead mb-3 mb-md-4" style="color: black;">Start using our prediction system today and take the first step towards proactive heart care.</p>
+			<a href="{% url 'login' %}" class="btn btn-lg w-100 w-md-auto" style="background: linear-gradient(90deg, #00C4B4, #1A3C34); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 1.1em; letter-spacing: 1px; text-decoration: none; display: inline-block; transition: all 0.5s cubic-bezier(.4,2,.6,1);" onmouseover="this.style.transform='translateY(-3px) scale(1.03)'; this.style.boxShadow='0 8px 24px rgba(0,196,180,0.15)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">Login to Get Started</a>
+		{% endif %}
+	</div>
+</section>
+
+{% endblock %}

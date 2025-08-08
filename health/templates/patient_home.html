@@ -1,0 +1,279 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block body %}
+<style>
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .welcome-banner {
+        background: linear-gradient(135deg, #00C4B4, #1A3C34);
+        padding: 60px;
+        border-radius: 20px;
+        color: white;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .welcome-text h1 {
+        font-size: 1.8em;
+        margin-bottom: 10px;
+    }
+
+    .welcome-text p {
+        opacity: 0.9;
+        margin: 0;
+        color: white;
+    }
+
+    .action-button {
+        background: white;
+        color: #1A3C34;
+        padding: 12px 25px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .action-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #00C4B4;
+        text-decoration: none;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .dashboard-card {
+        background: white;
+        border-radius: 20px;
+        padding: 35px 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        color: #1A3C34;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 180px;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    .card-header {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+        background: none;
+    }
+
+    .card-header h2 {
+        color: #1A3C34;
+        font-size: 1.7em;
+        margin: 0;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+
+    .health-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-item:hover {
+        transform: translateY(-5px);
+        background: linear-gradient(135deg, #00C4B4, #1A3C34);
+        color: white;
+    }
+
+    .stat-item:hover .stat-value,
+    .stat-item:hover .stat-label {
+        color: white;
+    }
+
+    .stat-value {
+        font-size: 1.8em;
+        font-weight: 600;
+        color: #1A3C34;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .recent-activity {
+        margin-top: 20px;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #00C4B4, #1A3C34);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        color: white;
+    }
+
+    .activity-details h4 {
+        margin: 0;
+        color: #1A3C34;
+        font-size: 1em;
+    }
+
+    .activity-details p {
+        margin: 5px 0 0;
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .quick-actions {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        gap: 28px;
+        margin-top: 10px;
+    }
+
+    .quick-action-button {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 18px 28px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        color: #1A3C34;
+        text-decoration: none;
+        font-size: 1.1em;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: all 0.3s cubic-bezier(.4,2,.6,1);
+        position: relative;
+        border: 1px solid #e0e0e0;
+    }
+
+    .quick-action-button i {
+        font-size: 1.3em;
+        background: linear-gradient(135deg, #00C4B4, #1A3C34);
+        border-radius: 50%;
+        padding: 10px;
+        color: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: background 0.3s;
+    }
+
+    .quick-action-button:hover {
+        background: #00C4B4;
+        color: white;
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 8px 24px rgba(0,196,180,0.15);
+        text-decoration: none;
+        border: 1px solid #00C4B4;
+    }
+    .quick-action-button:hover i {
+        background: white;
+        color: #00C4B4;
+    }
+
+    @media (max-width: 900px) {
+        .quick-actions {
+            flex-direction: column;
+            gap: 18px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .welcome-banner {
+            flex-direction: column;
+            text-align: center;
+            gap: 20px;
+        }
+    }
+
+    .profile-picture {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid white;
+        margin-right: 20px; /* Space between image and text */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .welcome-content {
+        display: flex;
+        align-items: center;
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="welcome-banner">
+        <div class="welcome-content">
+            <img src="{{pro.image.url}}" alt="Profile Picture" class="profile-picture">
+            <div class="welcome-text">
+                <h1>Welcome back, {{ pro.user.first_name }}!</h1>
+                <p>Track your heart health and stay informed about your well-being.</p>
+            </div>
+        </div>
+        <a href="{% url 'add_heartdetail_patient' %}" class="action-button">New Health Check <i class="fa-solid fa-heart-circle-check"></i></a>
+    </div>
+    <div class="dashboard-card">
+        <div class="card-header" style="background: none; box-shadow: none;">
+            <h2>Quick Actions</h2>
+        </div>
+        <div class="quick-actions">
+            <a href="{% url 'add_heartdetail_patient' %}" class="quick-action-button">
+                <i class="fa fa-plus-circle"></i>
+                New Health Check
+            </a>
+            <a href="{% url 'view_search_pat' %}" class="quick-action-button">
+                <i class="fa fa-history"></i>
+                View History
+            </a>
+            <a href="{% url 'sent_feedback' %}" class="quick-action-button">
+                <i class="fa fa-comment"></i>
+                Send Feedback
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

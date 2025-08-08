@@ -1,0 +1,117 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block body %}
+{% if terror == "create" %}
+<script>
+    alert('Send Feedback Successfully');
+    window.location="{% url 'sent_feedback' %}";
+</script>
+{% endif %}
+
+<style>
+    .feedback-container {
+        max-width: 800px;
+        margin: 60px auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        padding: 40px;
+    }
+    .feedback-title {
+        text-align: center;
+        font-size: 2em;
+        font-weight: 700;
+        color: #1A3C34;
+        margin-bottom: 30px;
+        letter-spacing: 1px;
+    }
+    .feedback-form {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #00C4B4;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+    .form-group small {
+        color: #666;
+        font-size: 0.9em;
+        margin-top: 4px;
+    }
+    .form-group input,
+    .form-group textarea {
+        border-radius: 10px;
+        border: 1.5px solid #e0e0e0;
+        padding: 12px 15px;
+        font-size: 1em;
+        color: #1A3C34;
+        background: #f9f9f9;
+        transition: all 0.3s ease;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+        border-color: #00C4B4;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(0,196,180,0.1);
+        outline: none;
+    }
+    .form-group textarea {
+        min-height: 200px;
+        resize: vertical;
+    }
+    .form-group input[readonly] {
+        background: #f0f0f0;
+        cursor: not-allowed;
+    }
+    .submit-btn {
+        background: linear-gradient(90deg, #00C4B4, #1A3C34);
+        color: white;
+        border: none;
+        padding: 14px 30px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,196,180,0.2);
+    }
+    @media (max-width: 768px) {
+        .feedback-container {
+            margin: 20px;
+            padding: 20px;
+        }
+    }
+</style>
+
+<div class="feedback-container">
+    <h1 class="feedback-title">Send Feedback</h1>
+    <form class="feedback-form" action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="uname" value="{{request.user.username}}" readonly>
+            <small>Automatically filled with your account name</small>
+        </div>
+        <div class="form-group">
+            <label>Write Message</label>
+            <textarea name="msg" required></textarea>
+            <small>Your feedback helps us improve our services. Please be specific and constructive.</small>
+        </div>
+        <button type="submit" class="submit-btn">Send Feedback</button>
+    </form>
+</div>
+
+{% endblock %}

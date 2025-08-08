@@ -1,0 +1,102 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block body %}
+
+<style>
+	.admin-dashboard-container {
+		max-width: 1200px;
+		margin: 40px auto 0 auto;
+		padding: 0 20px;
+	}
+	.admin-title {
+		text-align: center;
+		font-size: 2.4em;
+		font-weight: 700;
+		color: #1A3C34;
+		margin-bottom: 30px;
+		letter-spacing: 1px;
+	}
+	.admin-welcome-message {
+		text-align: center;
+		font-size: 1.4em;
+		color: #00C4B4;
+		margin-bottom: 40px;
+		font-weight: 600;
+	}
+	.admin-cards-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: 32px;
+		margin-bottom: 40px;
+	}
+	.admin-card {
+		background: white;
+		border-radius: 18px;
+		box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+		padding: 36px 24px 28px 24px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		transition: box-shadow 0.3s, transform 0.3s;
+		text-decoration: none;
+		color: #1A3C34;
+		border: 2px solid #e0f7f6;
+	}
+	.admin-card:hover {
+		box-shadow: 0 12px 36px rgba(0,196,180,0.18);
+		transform: translateY(-6px) scale(1.03);
+		border: 2px solid #00C4B4;
+		color: #00C4B4;
+		text-decoration: none;
+	}
+	.admin-card-count {
+		font-size: 2.8em;
+		font-weight: 700;
+		color: #00C4B4;
+		margin-bottom: 10px;
+	}
+	.admin-card-title {
+		font-size: 1.25em;
+		font-weight: 600;
+		margin-bottom: 8px;
+		color: #1A3C34;
+	}
+	.admin-card-desc {
+		color: #666;
+		font-size: 1em;
+		text-align: center;
+	}
+	@media (max-width: 900px) {
+		.admin-dashboard-container { padding: 0 5px; }
+		.admin-title { font-size: 1.5em; }
+		.admin-cards-grid { gap: 18px; }
+	}
+</style>
+
+<div class="admin-dashboard-container">
+	<div class="admin-title">Admin Dashboard</div>
+	<div class="admin-welcome-message">Welcome, {{ request.user.username }}!</div>
+	<div class="admin-cards-grid">
+		<a href="{% url 'view_doctor' %}" class="admin-card">
+			<div class="admin-card-count">{{doc}}</div>
+			<div class="admin-card-title">Total Doctors</div>
+			<div class="admin-card-desc">Manage and view all registered doctors.</div>
+		</a>
+		<a href="{% url 'view_patient' %}" class="admin-card">
+			<div class="admin-card-count">{{pat}}</div>
+			<div class="admin-card-title">Total Patients</div>
+			<div class="admin-card-desc">Manage and view all registered patients.</div>
+		</a>
+		<a href="{% url 'view_feedback' %}" class="admin-card">
+			<div class="admin-card-count">{{feed}}</div>
+			<div class="admin-card-title">Total Feedbacks</div>
+			<div class="admin-card-desc">Read and manage patient feedbacks.</div>
+		</a>
+		<a href="{% url 'view_search_pat' %}" class="admin-card">
+			<div class="admin-card-count">{{dis}}</div>
+			<div class="admin-card-title">Prediction History</div>
+			<div class="admin-card-desc">View all the predictions.</div>
+		</a>
+	</div>
+</div>
+{% endblock %}

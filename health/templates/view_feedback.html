@@ -1,0 +1,241 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block body %}
+
+<style>
+    .search-container {
+        padding: 20px 15px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .search-title {
+        color: #1A3C34;
+        margin: 0 0 25px 0;
+        font-size: clamp(1.5rem, 4vw, 2.2rem);
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 0.5px;
+        padding: 0 10px;
+    }
+    .search-table {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        padding: clamp(15px, 3vw, 32px);
+        margin: 0 auto;
+        width: 100%;
+        max-width: 1200px;
+        overflow-x: auto;
+    }
+    table.display {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: clamp(0.9rem, 2vw, 1.05rem);
+        background: white;
+    }
+    table.display thead th {
+        background: linear-gradient(90deg, #00C4B4, #1A3C34) !important;
+        color: white !important;
+        font-weight: 600;
+        border: none;
+        padding: clamp(10px, 2vw, 14px) clamp(6px, 1vw, 8px);
+        font-size: clamp(0.9rem, 2vw, 1.08rem);
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+    table.display tbody td {
+        padding: clamp(8px, 2vw, 12px) clamp(6px, 1vw, 8px);
+        border-bottom: 1.5px solid #f0f0f0;
+        color: #1A3C34;
+        vertical-align: middle;
+    }
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+        border-radius: 6px;
+        padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 18px);
+        font-size: clamp(0.85rem, 1.5vw, 1em);
+        font-weight: 600;
+        margin: 2px;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+    .btn-danger:hover { background: #c82333; }
+    .user-type {
+        font-size: clamp(0.8em, 1.5vw, 0.9em);
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 5px;
+        white-space: nowrap;
+    }
+    .user-type.doctor {
+        background-color: #e3f2fd;
+        color: #1565c0;
+    }
+    .user-type.patient {
+        background-color: #f1f8e9;
+        color: #558b2f;
+    }
+    .dataTables_filter {
+        margin-bottom: 15px;
+    }
+    .dataTables_filter input {
+        width: 100%;
+        max-width: 300px;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .action-buttons {
+        white-space: nowrap;
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .no-data {
+        text-align: center;
+        padding: 20px;
+        color: #6c757d;
+        font-size: clamp(14px, 2vw, 16px);
+    }
+
+    /* Responsive breakpoints */
+    @media (max-width: 1200px) {
+        .search-table {
+            margin: 0 15px;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .search-container {
+            padding: 15px 10px;
+        }
+        table.display thead th,
+        table.display tbody td {
+            padding: 8px 6px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .search-table {
+            padding: 15px 10px;
+            border-radius: 10px;
+        }
+        .dataTables_wrapper {
+            overflow-x: auto;
+        }
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        .btn-danger {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .search-container {
+            padding: 10px 5px;
+        }
+        .search-title {
+            margin-bottom: 15px;
+        }
+        .search-table {
+            padding: 10px 5px;
+        }
+        table.display thead th,
+        table.display tbody td {
+            padding: 6px 4px;
+            font-size: 0.9rem;
+        }
+    }
+
+    /* DataTables responsive styles */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        text-align: left;
+        margin-bottom: 10px;
+    }
+
+    @media screen and (max-width: 767px) {
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            text-align: center;
+        }
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            text-align: center;
+            margin-top: 10px;
+        }
+    }
+</style>
+
+<div class="search-container">
+    <h1 class="search-title">Feedback Records</h1>
+    <div class="search-table">
+        <table id="example" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>User Info</th>
+                    <th>Email</th>
+                    <th>Contact</th>
+                    <th>Date</th>
+                    <th>Message</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in dis %}
+                <tr>
+                    <td>{{forloop.counter}}</td>
+                    <td>
+                        {{i.name}}
+                    </td>
+                    <td>{{i.email}}</td>
+                    <td>
+                        {{i.contact|default:"-"}}
+                    </td>
+                    <td>{{i.date|date:"M d, Y"}}</td>
+                    <td>{{i.messages}}</td>
+                    <td class="action-buttons">
+                        <a href="{% url 'delete_feedback' i.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this feedback?')">
+                            <i class="fa fa-trash-o"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#example').DataTable({
+        responsive: true,
+        destroy: true,
+        "language": {
+            "search": "Search:",
+            "lengthMenu": "Show _MENU_ entries per page",
+            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+            "infoEmpty": "No entries to show",
+            "infoFiltered": "(filtered from _MAX_ total entries)"
+        },
+        "pageLength": 10,
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]]
+    });
+});
+</script>
+
+{% endblock %}

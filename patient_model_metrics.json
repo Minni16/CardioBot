@@ -1,0 +1,37 @@
+{
+    "accuracy": 0.70925,
+    "feature_names": [
+        "Age",
+        "Gender",
+        "Height",
+        "Weight",
+        "BMI",
+        "Smoke",
+        "Time_of_Smoking",
+        "Frequency_of_smoking",
+        "High_Blood_Pressure",
+        "Diabetes",
+        "High_Cholesterol",
+        "Family_History",
+        "Chest_Pain",
+        "Chest_Pain_Severity",
+        "Short_Breath",
+        "Short_Breath_Duration",
+        "Exercise",
+        "Fatty_Food",
+        "Stress"
+    ],
+    "confusion_matrix": [
+        [
+            1381,
+            618
+        ],
+        [
+            545,
+            1456
+        ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n           0       0.72      0.69      0.70      1999\n           1       0.70      0.73      0.71      2001\n\n    accuracy                           0.71      4000\n   macro avg       0.71      0.71      0.71      4000\nweighted avg       0.71      0.71      0.71      4000\n",
+    "trained_on": "2025-07-29 10:23:05.697123",
+    "model_type": "LogisticRegression"
+}

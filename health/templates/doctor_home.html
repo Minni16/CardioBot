@@ -1,0 +1,488 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block body %}
+<style>
+    body {
+        overflow-x: hidden;
+    }
+
+    .doctor-dashboard-container {
+        max-width: 1100px;
+        margin: 80px auto 0 auto;
+        padding: 0 20px;
+    }
+
+    .dashboard-main-content {
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        margin-bottom: 40px;
+    }
+
+    .dashboard-left-column {
+        flex: 2;
+        min-width: 450px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .doctor-welcome-banner {
+        background: linear-gradient(135deg, #00C4B4 0%, #1A3C34 100%);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
+        padding: 40px 32px 40px 32px;
+        text-align: left;
+        color: white;
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        position: relative;
+    }
+
+    .doctor-welcome-avatar {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .doctor-welcome-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .doctor-welcome-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        width: 100%;
+        position: relative;
+        z-index: 1;
+    }
+
+    .doctor-welcome-title {
+        font-size: 2.2em;
+        font-weight: 700;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+        color: white;
+    }
+
+    .doctor-welcome-subtitle {
+        font-size: 1.1em;
+        font-weight: 400;
+        opacity: 0.95;
+        margin-bottom: 32px;
+        letter-spacing: 0.5px;
+        color: white;
+    }
+
+    .doctor-action-buttons {
+        display: flex;
+        gap: 70px;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    .doctor-action-button {
+        background: white;
+        color: #1A3C34;
+        padding: 18px 28px;
+        border-radius: 12px;
+        font-size: 1.15em;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s;
+        letter-spacing: 1px;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        white-space: nowrap;
+    }
+
+    .doctor-action-button:hover,
+    .doctor-action-button:focus {
+        background: #00C4B4;
+        color: white;
+        box-shadow: 0 8px 24px rgba(0, 196, 180, 0.15);
+        outline: none;
+        text-decoration: none;
+    }
+
+    .dashboard-carousel-section {
+        flex: 1;
+        min-width: 300px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
+        padding: 40px 32px;
+    }
+
+    @media (max-width: 900px) {
+        .dashboard-left-column {
+            min-width: 100%;
+        }
+
+        .doctor-welcome-banner {
+            padding: 30px 20px;
+        }
+
+        .doctor-welcome-text {
+            text-align: left;
+        }
+
+        .doctor-action-buttons {
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: flex-start;
+        }
+
+        .doctor-action-button {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .dashboard-carousel-section {
+            min-width: 100%;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .doctor-dashboard-container {
+            padding: 0 15px;
+        }
+
+        .doctor-welcome-banner {
+            padding: 25px 20px;
+        }
+
+        .doctor-action-button {
+            min-width: 100%;
+        }
+
+        .carousel-card {
+            width: 260px;
+        }
+    }
+
+    @media (max-width: 320px) {
+        .doctor-welcome-title {
+            font-size: 1.4em;
+        }
+    }
+
+    /* Carousel styles */
+    .carousel-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+        height: 210px;
+        margin-bottom: 10px;
+        perspective: 1000px;
+        transform-style: preserve-3d;
+        width: 100%;
+        background: none;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .carousel-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .carousel-container::-webkit-scrollbar-thumb {
+        display: none;
+    }
+
+    .carousel-container::-webkit-scrollbar-track {
+        display: none;
+    }
+
+    .carousel-card {
+        flex: 0 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+        padding: 30px;
+        width: 280px;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        position: absolute;
+        transform: translateX(0) scale(0.7) translateZ(-300px);
+        pointer-events: none;
+        will-change: transform, opacity, z-index;
+        cursor: pointer;
+    }
+
+    .carousel-card.active {
+        opacity: 1;
+        transform: translateX(0) scale(1) translateZ(0);
+        z-index: 10;
+        pointer-events: auto;
+    }
+
+    .carousel-card.prev {
+        opacity: 0.6;
+        z-index: 5;
+        transform: translateX(-162px) scale(0.8) translateZ(-100px);
+    }
+
+    .carousel-card.next {
+        opacity: 0.6;
+        z-index: 5;
+        transform: translateX(162px) scale(0.8) translateZ(-100px);
+    }
+
+    .carousel-card.prev-2 {
+        opacity: 0.3;
+        z-index: 2;
+        transform: translateX(-264px) scale(0.6) translateZ(-200px);
+    }
+
+    .carousel-card.next-2 {
+        opacity: 0.3;
+        z-index: 2;
+        transform: translateX(264px) scale(0.6) translateZ(-200px);
+    }
+
+    .carousel-card h3 {
+        font-size: 1.4em;
+        color: #00C4B4;
+        margin-bottom: 15px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .carousel-card p {
+        font-size: 0.95em;
+        color: #555;
+        line-height: 1.6;
+    }
+
+    .accuracy-percentage {
+        font-size: 2.5em;
+        font-weight: 700;
+        color: #00C4B4;
+        margin-top: 10px;
+        margin-bottom: 15px;
+    }
+
+    .carousel-pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 7px;
+        margin-bottom: 10px;
+        margin-left: 125px;
+    }
+
+    .carousel-pagination span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ccc;
+        display: inline-block;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .carousel-pagination span:hover {
+        background-color: #00c4b4;
+    }
+
+    .carousel-pagination .active {
+        background-color: #00a389;
+    }
+
+    .carousel-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .carousel {
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .carousel-dots {
+        position: relative;
+        bottom: 0;
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .carousel-dots span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #ccc;
+        display: inline-block;
+    }
+
+    .carousel-dots .active {
+        background-color: #00a389;
+    }
+</style>
+
+<div class="doctor-dashboard-container">
+    <div class="dashboard-main-content">
+        <div class="dashboard-left-column">
+            <div class="doctor-welcome-banner">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div class="doctor-welcome-avatar">
+                        <img src="{{ request.user.doctor.image.url }}" alt="Doctor Photo">
+                    </div>
+                    <div class="doctor-welcome-text">
+                        <h1 class="doctor-welcome-title">Welcome back, Dr. {{ request.user.first_name }}!</h1>
+                        <div class="doctor-welcome-subtitle">
+                            Hope you're having a healthy day
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="doctor-action-buttons">
+                <a href="{% url 'add_heartdetail' %}" class="doctor-action-button">
+                    New Health Check <i class="fa-solid fa-heart-circle-check"></i>
+                </a>
+
+                <a href="{% url 'view_search_pat' %}" class="doctor-action-button">
+                    View Patient Records <i class="fa-solid fa-clipboard-list"></i>
+                </a>
+            </div>
+        </div>
+        <div class="dashboard-carousel-section">
+            <div class="carousel-container">
+                <div class="carousel-card">
+                    <h3>Doctor Mode</h3>
+                    <p class="card-description">Prediction Accuracy</p>
+                    <p class="accuracy-percentage">80.98%</p>
+                    <p class="card-description">Our Logistic Regression model for doctor mode provides reliable
+                        predictions.</p>
+                </div>
+                <div class="carousel-card">
+                    <h3>Heart Disease Facts</h3>
+                    <p class="card-description">Cardiovascular diseases are the leading cause of death globally, taking
+                        an
+                        estimated 17.9 million lives each year. Early detection and lifestyle modifications are crucial
+                        for
+                        prevention.</p>
+                </div>
+                <div class="carousel-card">
+                    <h3>Patient Management</h3>
+                    <p class="card-description">Efficiently track patient history, manage consultations, and access
+                        detailed
+                        prediction records for comprehensive care.</p>
+                </div>
+                <div class="carousel-card">
+                    <h3>Data Security & Privacy</h3>
+                    <p class="card-description">All patient data and prediction results are secured with
+                        industry-standard
+                        encryption to ensure compliance and compliance.</p>
+                </div>
+            </div>
+            <div class="carousel-pagination"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const carousel = document.querySelector('.carousel-container');
+        const cards = Array.from(document.querySelectorAll('.carousel-card'));
+        const paginationContainer = document.querySelector('.carousel-pagination');
+
+        if (!carousel || cards.length === 0) return;
+
+        let currentIndex = 0;
+        let autoScrollInterval;
+
+        // Create pagination dots
+        cards.forEach((_, index) => {
+            const dot = document.createElement('span');
+            dot.classList.add('dot');
+            dot.addEventListener('click', () => {
+                goToSlide(index);
+                resetAutoScroll();
+            });
+            paginationContainer.appendChild(dot);
+        });
+        const dots = Array.from(document.querySelectorAll('.dot'));
+
+        function updateCarousel() {
+            cards.forEach((card, index) => {
+                card.classList.remove('active', 'prev', 'next', 'prev-2', 'next-2');
+
+                if (index === currentIndex) {
+                    card.classList.add('active');
+                } else if (index === (currentIndex - 1 + cards.length) % cards.length) {
+                    card.classList.add('prev');
+                } else if (index === (currentIndex + 1) % cards.length) {
+                    card.classList.add('next');
+                } else if (index === (currentIndex - 2 + cards.length) % cards.length) {
+                    card.classList.add('prev-2');
+                } else if (index === (currentIndex + 2) % cards.length) {
+                    card.classList.add('next-2');
+                }
+            });
+
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        function goToSlide(index) {
+            currentIndex = index;
+            updateCarousel();
+        }
+
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % cards.length;
+            updateCarousel();
+        }
+
+        function startAutoScroll() {
+            autoScrollInterval = setInterval(nextSlide, 3000);
+        }
+
+        function resetAutoScroll() {
+            clearInterval(autoScrollInterval);
+            startAutoScroll();
+        }
+
+        // Initial setup
+        updateCarousel();
+        startAutoScroll();
+
+        // Pause on hover
+        carousel.addEventListener('mouseenter', () => clearInterval(autoScrollInterval));
+        carousel.addEventListener('mouseleave', () => startAutoScroll());
+    });
+</script>
+{% endblock %}

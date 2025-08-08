@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f4f8;
+        }
+        .container {
+            width: 400px;
+            padding: 20px;
+        }
+        .welcome-text {
+            font-size: 1.1em;
+            color: #6c757d;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        .title {
+            font-size: 2em;
+            color: #1A3C34;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            color: #333;
+            background: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .form-group input:focus {
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-group input::placeholder {
+            color: #6c757d;
+        }
+        button {
+            width: 100%;
+            background: linear-gradient(90deg, #00C4B4, #1A3C34);
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .error-message {
+            color: #ff3b30;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <p class="welcome-text">Welcome Back, Admin!</p>
+        <h1 class="title">Login</h1>
+        
+        {% if error %}
+            {% if error == "not" %}
+                <div class="error-message">You are not authorized as admin</div>
+            {% elif error == "invalid" %}
+                <div class="error-message">Invalid username or password</div>
+            {% endif %}
+        {% endif %}
+
+        <form action="{% url 'login_admin' %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="text" name="uname" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <input type="password" name="pwd" placeholder="Password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>

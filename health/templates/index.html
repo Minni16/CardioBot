@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+	    	<title>CardioBot</title>
+	
+	<!-- Favicon -->
+	<link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/cb-icon-16.png' %}">
+	<link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/cb-icon-32.png' %}">
+	<link rel="icon" type="image/png" sizes="48x48" href="{% static 'images/cb-icon-48.png' %}">
+	<link rel="icon" type="image/png" sizes="70x70" href="{% static 'images/cb-icon-70.png' %}">
+	<link rel="icon" type="image/png" sizes="150x150" href="{% static 'images/cb-icon-150.png' %}">
+	<link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/cb-icon-180.png' %}">
+	<link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/cb-icon-192.png' %}">
+	<link rel="icon" type="image/png" sizes="512x512" href="{% static 'images/cb-icon-512.png' %}">
+
+	
+	<!-- Meta tag Keywords -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="UTF-8" />
+	<meta name="keywords" />
+	{% block head %}{% endblock %}
+	<script>
+		addEventListener("load", function () {
+			setTimeout(hideURLbar, 0);
+		}, false);
+
+		function hideURLbar() {
+			window.scrollTo(0, 1);
+		}
+	</script>
+	<link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
+	<!-- Bootstrap-Core-CSS -->
+	<link href="{% static 'css/css_slider.css' %}" type="text/css" rel="stylesheet" media="all">
+	<!-- banner slider -->
+	<link rel="stylesheet" href="{% static 'css/style.css' %}" type="text/css" media="all" />
+	<!-- Style-CSS -->
+	<link href="{% static 'css/font-awesome.min.css' %}" rel="stylesheet">
+	<!-- Font-Awesome-Icons-CSS -->
+	<!-- //Custom-Files -->
+
+	<!-- Web-Fonts -->
+	<link href="//fonts.googleapis.com/css?family=Quicksand:300,400,500,700" rel="stylesheet">
+	<link href="//fonts.googleapis.com/css?family=Mukta:200,300,400,500,600,700,800&amp;subset=devanagari,latin-ext"
+		rel="stylesheet">
+	<!-- Web-Fonts -->
+
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+	<!-- Swiper CSS -->
+	<link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.4.2/css/all.css" crossorigin="anonymous">
+
+	<!-- Swiper JS (defer to load after content) -->
+	<script src="https://unpkg.com/swiper/swiper-bundle.min.js" defer></script>
+
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+			font-family: 'Poppins', sans-serif;
+		}
+
+		body {
+			min-height: 100vh;
+			display: flex;
+			flex-direction: column;
+		}
+
+		/* Navigation Bar Styles */
+		.navbar {
+			background: white;
+			padding: 15px 0;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+			position: sticky;
+			top: 0;
+			z-index: 1000;
+		}
+
+		.nav-container {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 0 20px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.logo-icon {
+			height: 24px;
+			width: 24px;
+			margin-right: 8px;
+		}
+
+		.logo {
+			display: flex;
+			align-items: center;
+			font-weight: bold;
+			font-size: 1.2rem;
+			color: #1A3C34;
+			text-decoration: none;
+			background: linear-gradient(90deg, #00C4B4, #1A3C34);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			margin-right: 50px;
+		}
+
+		.nav-links {
+			display: flex;
+			gap: 30px;
+			align-items: center;
+		}
+
+		.nav-links a {
+			color: #1A3C34;
+			text-decoration: none;
+			font-weight: 500;
+			transition: color 0.3s ease;
+			font-size: 1rem;
+		}
+
+		.nav-links a:hover {
+			color: #00C4B4;
+		}
+
+		.nav-button {
+			background: linear-gradient(90deg, #00C4B4, #1A3C34);
+			color: white;
+			padding: 10px 20px;
+			border-radius: 8px;
+			text-decoration: none;
+			font-weight: 500;
+			transition: all 0.3s ease;
+		}
+
+		.nav-button:hover {
+			box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+			transform: translateY(-2px);
+		}
+
+		/* Dropdown Menu Styles */
+		.dropdown {
+			position: relative;
+			display: inline-block;
+		}
+
+		.dropdown-content {
+			display: none;
+			position: absolute;
+			top: 100%;
+			left: 0;
+			background: white;
+			min-width: 200px;
+			box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+			border-radius: 12px;
+			padding: 10px 0;
+			z-index: 1000;
+			border: 1px solid #e9ecef;
+		}
+
+		.dropdown:hover .dropdown-content {
+			display: block;
+		}
+
+		.dropdown-content a {
+			display: block;
+			padding: 12px 20px;
+			color: #1A3C34;
+			text-decoration: none;
+			transition: all 0.3s ease;
+			font-size: 0.9em;
+			border-bottom: 1px solid #f8f9fa;
+		}
+
+		.dropdown-content a:last-child {
+			border-bottom: none;
+		}
+
+		.dropdown-content a:hover {
+			background: linear-gradient(135deg, rgba(0,196,180,0.1), rgba(26,60,52,0.05));
+			color: #00C4B4;
+			transform: translateX(5px);
+		}
+
+		/* Profile dropdown specific styling */
+		.dropdown .nav-link {
+			cursor: pointer;
+		}
+
+		.dropdown .nav-link:hover {
+			color: #00C4B4;
+		}
+
+		/* Notification Badge Styles */
+		.notification-badge {
+			background-color: #dc3545; /* Red background for notifications */
+			color: white;
+			border-radius: 50%; /* Circular shape */
+			padding: 2px 7px;
+			font-size: 0.7em;
+			font-weight: bold;
+			position: relative;
+			top: -8px; /* Adjust vertical position */
+			left: 5px; /* Adjust horizontal position */
+		}
+
+		/* Footer Styles */
+		.footer {
+			background: linear-gradient(135deg, #1A3C34, #00C4B4);
+			color: white;
+			padding: 20px 0;
+			margin-top: auto;
+		}
+
+		.footer-content {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 0 20px;
+			text-align: center;
+		}
+
+		.footer p {
+			opacity: 0.9;
+			font-size: 0.9rem;
+			color: white;
+		}
+
+		/* Mobile Menu */
+		.mobile-menu-btn {
+			display: none;
+			background: none;
+			border: none;
+			color: #1A3C34;
+			font-size: 1.5rem;
+			cursor: pointer;
+		}
+
+		@media (max-width: 768px) {
+			.mobile-menu-btn {
+				display: block;
+		}
+
+			.nav-links {
+				display: none;
+				position: absolute;
+				top: 100%;
+				left: 0;
+				right: 0;
+				background: white;
+				padding: 20px;
+				flex-direction: column;
+				gap: 15px;
+				box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+		}
+
+			.nav-links.active {
+				display: flex;
+			}
+
+			.dropdown-content {
+				position: static;
+				box-shadow: none;
+				padding-left: 20px;
+			}
+		}
+
+		/* Main Content */
+		.main-content {
+			flex: 1;
+		}
+	</style>
+
+	<link rel='stylesheet' type='text/css' href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+	<link rel='stylesheet' type='text/css'
+		href="https://cdn.datatables.net/buttons/1.6.2/css/buttons.dataTables.min.css">
+
+	<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+	<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+	<script src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+	<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
+
+	<script>
+		$(document).ready(function () {
+			$('#example').DataTable({
+				dom: 'Bfrtip',
+				buttons: [
+					'copyHtml5',
+					'excelHtml5',
+					'csvHtml5',
+					'pdfHtml5'
+				]
+			});
+		});
+	</script>
+</head>
+
+<body>
+	<!-- Navigation Bar -->
+	<nav class="navbar">
+		<div class="nav-container">
+			<a href="{% url 'home' %}" class="logo">
+				<img src="{% static 'images/cb-icon-32.png' %}" alt="CardioBot Icon" class="logo-icon">
+				CardioBot
+			</a>
+			
+			<button class="mobile-menu-btn">
+				<i class="fa fa-bars"></i>
+			</button>
+
+			<div class="nav-links">
+				<a href="{% url 'home' %}">Home</a>
+				{% if not user.is_authenticated or not user.is_staff %}
+					<a href="{% url 'about' %}">About</a>
+					<a href="{% url 'contact' %}">Contact Us</a>
+				{% endif %}
+				
+				{% if user.is_authenticated %}
+					{% if user.is_staff %}
+						<div class="dropdown">
+							<a href="#">Admin</a>
+							<div class="dropdown-content">
+								<a href="{% url 'view_doctor' %}">View Doctors</a>
+								<a href="{% url 'view_patient' %}">View Patients</a>
+								<a href="{% url 'view_feedback' %}">View Feedback {% if unread_feedback_count > 0 %}<span class="notification-badge">{{ unread_feedback_count }}</span>{% endif %}</a>
+							</div>
+						</div>
+						<a href="{% url 'logout' %}" class="nav-button" style="margin-left: 15px;">Logout</a>
+					{% elif user.doctor_set.all %}
+						<div class="dropdown">
+							<a href="#" class="nav-link">PROFILE <i class="fa fa-chevron-down" style="font-size: 0.8em; margin-left: 5px;"></i></a>
+							<div class="dropdown-content">
+								<a href="{% url 'profile_doctor' %}"><i class="fa fa-user" style="margin-right: 8px;"></i>View Profile</a>
+								<a href="{% url 'edit_profile' %}"><i class="fa fa-edit" style="margin-right: 8px;"></i>Update Profile</a>
+								<a href="{% url 'logout' %}"><i class="fa fa-sign-out-alt" style="margin-right: 8px;"></i>Logout</a>
+							</div>
+						</div>
+					{% else %}
+						<div class="dropdown">
+							<a href="#" class="nav-link">Profile <i class="fa fa-chevron-down" style="font-size: 0.8em; margin-left: 5px;"></i></a>
+							<div class="dropdown-content">
+								<a href="{% url 'profile_doctor' %}"><i class="fa fa-user" style="margin-right: 8px;"></i>View Profile</a>
+								<a href="{% url 'edit_profile' %}"><i class="fa fa-edit" style="margin-right: 8px;"></i>Update Profile</a>
+								<a href="{% url 'logout' %}"><i class="fa fa-sign-out-alt" style="margin-right: 8px;"></i>Logout</a>
+							</div>
+						</div>
+					{% endif %}
+				{% else %}
+					<a href="{% url 'login' %}" class="nav-button">Login / Register</a>
+				{% endif %}
+			</div>
+		</div>
+	</nav>
+
+	<!-- Main Content -->
+	<div class="main-content">
+		<!-- Django Messages Display -->
+		{% if messages %}
+		<div class="messages-container" style="position: fixed; top: 80px; right: 20px; z-index: 1001; max-width: 400px;">
+			{% for message in messages %}
+			<div class="alert alert-{{ message.tags }} alert-dismissible fade show" 
+				 style="margin-bottom: 10px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+						{% if message.tags == 'success' %}
+							background: linear-gradient(135deg, #d4edda, #c3e6cb); 
+							border: 1px solid #c3e6cb; 
+							color: #155724;
+						{% elif message.tags == 'error' %}
+							background: linear-gradient(135deg, #f8d7da, #f5c6cb); 
+							border: 1px solid #f5c6cb; 
+							color: #721c24;
+						{% elif message.tags == 'warning' %}
+							background: linear-gradient(135deg, #fff3cd, #ffeaa7); 
+							border: 1px solid #ffeaa7; 
+							color: #856404;
+						{% else %}
+							background: linear-gradient(135deg, #d1ecf1, #bee5eb); 
+							border: 1px solid #bee5eb; 
+							color: #0c5460;
+						{% endif %}">
+				<strong>
+					{% if message.tags == 'success' %}✅ 
+					{% elif message.tags == 'error' %}❌ 
+					{% elif message.tags == 'warning' %}⚠️ 
+					{% else %}ℹ️ 
+					{% endif %}
+				</strong>
+				{{ message }}
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close" 
+						style="background: none; border: none; font-size: 1.5rem; font-weight: bold; 
+							   color: inherit; opacity: 0.7; cursor: pointer; float: right; margin-left: 10px;">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			{% endfor %}
+		</div>
+		
+		<script>
+			// Auto-hide messages after 5 seconds
+			setTimeout(function() {
+				var alerts = document.querySelectorAll('.alert');
+				alerts.forEach(function(alert) {
+					alert.style.transition = 'opacity 0.5s ease-out';
+					alert.style.opacity = '0';
+					setTimeout(function() {
+						alert.remove();
+					}, 500);
+				});
+			}, 5000);
+			
+			// Manual close functionality
+			document.addEventListener('DOMContentLoaded', function() {
+				var closeButtons = document.querySelectorAll('.close');
+				closeButtons.forEach(function(button) {
+					button.addEventListener('click', function() {
+						var alert = this.closest('.alert');
+						alert.style.transition = 'opacity 0.5s ease-out';
+						alert.style.opacity = '0';
+						setTimeout(function() {
+							alert.remove();
+						}, 500);
+					});
+				});
+			});
+		</script>
+		{% endif %}
+		
+		{% block body %}
+		{% endblock %}
+	</div>
+
+	<!-- Footer -->
+	<footer class="footer">
+		<div class="footer-content">
+			<p>&copy; {% now "Y" %} CardioBot. All rights reserved.</p>
+		</div>
+	</footer>
+
+	<!-- Mobile Menu Script -->
+	<script>
+		document.querySelector('.mobile-menu-btn').addEventListener('click', function() {
+			document.querySelector('.nav-links').classList.toggle('active');
+		});
+	</script>
+</body>
+
+</html>

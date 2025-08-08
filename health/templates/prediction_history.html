@@ -1,0 +1,66 @@
+{% extends 'index.html' %}
+{% block body %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="text-center mb-4">Prediction History</h2>
+            <div class="card mb-4">
+                <!-- <div class="card-header">
+                    <h4>Original Prediction</h4>
+                </div> -->
+                <div class="card-body">
+                    
+                    <p style="color: #000000; font-size: 18px;"><strong>Date:</strong> {{ search_data.created }}</p>
+                    <br>
+                    <p style="color: #000000; font-size: 18px;"><strong>Input Values:</strong></p>
+                    <ul class="list-group list-group-flush mb-3">
+                        {% for key, value in main_formatted_values.items %}
+                            <li class="list-group-item" style="padding: 10px 0px;  border: none;"><strong>{{ key }}:</strong> {{ value }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- <h3 class="mb-3">History</h3>
+            {% if history %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Prediction Accuracy</th>
+                                <th>Result</th>
+                                <th>Values</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in history %}
+                            <tr>
+                                <td>{{ entry.created }}</td>
+                                <td>{{ entry.prediction_accuracy|floatformat:"2" }}%</td>
+                                <td>
+                                    {% if entry.result == '0' %}
+                                        <span class="text-success">Healthy</span>
+                                    {% else %}
+                                        <span class="text-danger">Unhealthy</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <ul class="list-group list-group-flush" style="background-color: transparent;">
+                                    {% for key, value in entry.formatted_values.items %}
+                                        <li class="list-group-item" style="background-color: transparent; border: none; padding: .25rem 0;"><strong>{{ key }}:</strong> {{ value }}</li>
+                                    {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center">No history available for this prediction.</p>
+            {% endif %} -->
+        </div>
+    </div>
+</div>
+{% endblock %} 

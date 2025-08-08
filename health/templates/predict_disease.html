@@ -1,0 +1,256 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block body %}
+<style>
+    .prediction-container {
+        padding: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .prediction-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    /* .prediction-result {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+        text-align: center;
+
+        max-width: 400px; 
+        margin: 0 auto;    
+    } */
+    
+    .prediction-result {
+        background: linear-gradient(145deg, #ffffff, #f0f0f0);
+        padding: 25px 40px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 128, 0, 0.15);
+        margin: 30px auto;
+        max-width: 300px;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .prediction-result:hover {
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(0, 128, 0, 0.25);
+    }
+
+    .prediction-result h2 {
+        color: #28a745;
+        font-weight: 700;
+        font-size: 1.6rem;
+        letter-spacing: 1px;
+    }
+    @keyframes fadeUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .prediction-result {
+        animation: fadeUp 0.8s ease-in-out;
+    }
+
+    .result {
+        font-size: 24px;
+        font-weight: bold;
+        /* margin-bottom: 20px; */
+    }
+    .healthy {
+        color: #28a745;
+    }
+    .unhealthy {
+        color: #dc3545;
+    }
+    .doctors-section {
+        margin-top: 30px;
+    }
+    .doctors-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .doctors-table th {
+        background: #37A2B7;
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+    .doctors-table td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+    }
+    .doctors-table tr:last-child td {
+        border-bottom: none;
+    }
+    .doctor-image {
+        width: 80px;
+        height: 90px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    .action-button {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #37A2B7;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-top: 20px;
+    }
+    .action-button:hover {
+        background-color: #2C8898;
+        color: white;
+        text-decoration: none;
+    }
+
+    /* New styling for the feature impact section */
+    .feature-impact-container {
+        max-width: 800px;
+        margin: 40px auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        padding: 30px;
+        text-align: center;
+    }
+    .feature-impact-title {
+        font-size: 1.8em;
+        font-weight: 700;
+        color: #1A3C34;
+        margin-bottom: 20px;
+    }
+    .impact-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .impact-table th, .impact-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+    .impact-table th {
+        background-color: #f2f2f2;
+        font-weight: 600;
+        color: #00C4B4;
+    }
+    .impact-positive { color: #dc3545; font-weight: bold; } /* Red for higher risk */
+    .impact-negative { color: #28a745; font-weight: bold; } /* Green for lower risk */
+    .impact-neutral { color: #6c757d; } /* Gray for neutral */
+</style>
+
+<div class="prediction-container">
+    <div class="prediction-header">
+        <h2>Heart Disease Prediction Result</h2>
+    </div>
+
+    <div class="prediction-result">
+        <!-- <div class="accuracy">
+            <strong>Accuracy:</strong> {{ accuracy }}%
+        </div> -->
+        <div class="result">
+            {{ pred|safe }}
+        </div>
+
+        {% if request.user.doctor_set.all.0 %}
+            <a href="{% url 'view_search_pat' %}" class="action-button">
+                <i class="fa fa-history"></i> View All Predictions
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- {# Existing Doctors Section (if you didn't delete it) #}
+    {% if pred != "0" and doctor %}
+    <div class="doctors-section">
+        <h3 class="text-center mb-4">Recommended Doctors in Your Area</h3>
+        <div class="table-responsive">
+            <table class="doctors-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Image</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Contact</th>
+                        <th>Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in doctor %}
+                    <tr>
+                        <td>{{forloop.counter}}</td>
+                        <td><img src="{{i.image.url}}" class="doctor-image" alt="Doctor's photo"></td>
+                        <td>{{i.user.first_name}} {{i.user.last_name}}</td>
+                        <td>{{i.user.email}}</td>
+                        <td>{{i.contact}}</td>
+                        <td>{{i.address}}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No doctors found in your area.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %} -->
+
+
+    {% if feature_impacts %}
+    <div class="feature-impact-container">
+        <h3 class="feature-impact-title">How Each Factor Impacts Your Risk</h3>
+        <table class="impact-table">
+            <thead>
+                <tr>
+                    <th>Factor</th>
+                    <th>Your Value</th>
+                    <th>Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in feature_impacts %}
+                <tr>
+                    <td>{{ item.feature }}</td>
+                    <td>{{ item.value|floatformat:"-2" }}</td>
+                    <!-- <td class="
+                        {% if item.normalized_impact > 0.2 %}impact-positive{% elif item.normalized_impact < -0.2 %}impact-negative{% else %}impact-neutral{% endif %}">
+                        {{ item.normalized_impact|floatformat:"-2" }}
+                    </td>
+                    <td>{{ item.relative_importance }}%</td> -->
+                    <td class="
+                        {% if item.impact > 0.1 %}impact-positive{% elif item.impact < -0.1 %}impact-negative{% else %}impact-neutral{% endif %}">
+                        {% if item.impact > 0.3 %}
+                            Strongly Increases Risk
+                        {% elif item.impact > 0.1 %}
+                            Moderately Increases Risk
+                        {% elif item.impact < -0.3 %}
+                            Strongly Decreases Risk
+                        {% elif item.impact < -0.1 %}
+                            Moderately Decreases Risk
+                        {% else %}
+                            Minimal Impact
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}

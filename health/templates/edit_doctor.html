@@ -1,0 +1,154 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block body %}
+	<!-- register -->
+{% ifequal error "create" %}
+<script>
+    alert('Doctor Updated Successfully');
+    window.location="{% url 'view_doctor' %}";
+</script>
+{% endifequal %}
+
+<style>
+    .edit-doctor-container {
+        max-width: 700px;
+        margin: 50px auto;
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        padding: 40px 36px 36px 36px;
+    }
+    .edit-doctor-title {
+        text-align: center;
+        font-size: 2em;
+        font-weight: 700;
+        color: #1A3C34;
+        margin-bottom: 18px;
+        letter-spacing: 1px;
+    }
+    .edit-doctor-form {
+        margin-top: 24px;
+    }
+    .form-row {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 18px;
+    }
+    .form-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .form-col label {
+        font-weight: 600;
+        color: #00C4B4;
+        margin-bottom: 6px;
+    }
+    .form-col input, .form-col select {
+        border-radius: 10px;
+        border: 1.5px solid #e0e0e0;
+        padding: 12px;
+        font-size: 1em;
+        color: #1A3C34;
+        background: #f9f9f9;
+        transition: all 0.3s ease;
+    }
+    .form-col input:focus, .form-col select:focus {
+        border-color: #00C4B4;
+        background: #fff;
+        box-shadow: 0 0 0 2px rgba(0,196,180,0.10);
+        outline: none;
+    }
+    .doctor-image-preview {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-top: 8px;
+        background: #f8f9fa;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .edit-doctor-btn {
+        background: linear-gradient(90deg, #00C4B4, #1A3C34);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(.4,2,.6,1);
+        letter-spacing: 1px;
+        margin: 30px auto 0 auto;
+        display: block;
+    }
+    .edit-doctor-btn:hover, .edit-doctor-btn:focus {
+        background: #00C4B4;
+        color: white;
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 8px 24px rgba(0,196,180,0.15);
+        outline: none;
+    }
+    @media (max-width: 700px) {
+        .edit-doctor-container { padding: 20px 5px; }
+        .form-row { flex-direction: column; gap: 0; }
+    }
+</style>
+
+<div class="edit-doctor-container">
+    <div class="edit-doctor-title">Update Doctor</div>
+    <form action="" method="post" enctype="multipart/form-data" class="edit-doctor-form">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-col">
+                <label>First Name</label>
+                <input type="text" value="{{doc.user.first_name}}" name="fname" placeholder="First Name" required="">
+            </div>
+            <div class="form-col">
+                <label>Last Name</label>
+                <input type="text" value="{{doc.user.last_name}}" name="lname" placeholder="Last Name" required="">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-col">
+                <label>Email</label>
+                <input type="email" value="{{doc.user.email}}" name="email" placeholder="Enter Email" required="">
+            </div>
+            <div class="form-col">
+                <label>Contact</label>
+                <input type="text" name="contact" value="{{doc.contact}}" placeholder="Enter Contact" required="">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-col">
+                <label>Specialist</label>
+                <select name="type">
+                    {% for i in type %}
+                        {% ifequal i.name doc.category %}
+                        <option value="{{i.name}}" selected>{{i.name}}</option>
+                        {% else %}
+                        <option value="{{i.name}}">{{i.name}}</option>
+                        {% endifequal %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-col">
+                <label>City</label>
+                <input type="text" value="{{doc.address}}" name="add" placeholder="Enter Address" required="">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-col">
+                <label>Image</label>
+                <input type="file" name="image">
+                {% if doc.image %}
+                <img src="{{doc.image.url}}" class="doctor-image-preview">
+                {% endif %}
+            </div>
+        </div>
+        <button type="submit" class="edit-doctor-btn">Update Doctor</button>
+    </form>
+</div>
+	<!-- //register -->
+
+{% endblock %}

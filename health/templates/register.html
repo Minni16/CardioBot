@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup Page</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f4f8;
+        }
+        .container {
+            display: flex;
+            width: 900px;
+            height: 550px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .welcome-section {
+            flex: 1;
+            background: linear-gradient(135deg, #00C4B4, #1A3C34);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            text-align: center;
+        }
+        .welcome-section h2 {
+            font-size: 2.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .welcome-section p {
+            font-size: 1em;
+            font-weight: 300;
+            margin-bottom: 25px;
+            opacity: 0.9;
+        }
+        .welcome-section button {
+            background: linear-gradient(90deg, #00C4B4, #1A3C34);
+            border: none;
+            color: white;
+            padding: 12px 40px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 400;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .welcome-section button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        .signup-section {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: white;
+        }
+        .signup-section h3 {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #1A3C34;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .signup-section form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .signup-section .form-group {
+            display: flex;
+            gap: 15px;
+        }
+        .signup-section .form-group input,
+        .signup-section .form-group select {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 0.9em;
+            color: #333;
+            background: #f9f9f9;
+            transition: border-color 0.3s;
+        }
+        .signup-section .form-group input:focus,
+        .signup-section .form-group select:focus {
+            outline: none;
+            border-color: #00C4B4;
+            background: white;
+        }
+        .signup-section .form-group input[type="radio"] {
+            flex: none;
+            margin-right: 5px;
+        }
+        .signup-section .form-group label {
+            font-size: 0.9em;
+            color: #333;
+            margin-right: 10px;
+        }
+        .signup-section button {
+            background: linear-gradient(90deg, #00C4B4, #1A3C34);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 400;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .signup-section button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        .signup-section p {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.85em;
+            color: #666;
+        }
+        .signup-section p a {
+            color: #00C4B4;
+            text-decoration: none;
+            font-weight: 400;
+        }
+        .signup-section p a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-section">
+            <h2>Welcome Back!</h2>
+            <p>Already have an account? Login to continue your journey with us</p>
+            <button onclick="window.location.href='/login'">Sign In</button>
+        </div>
+        <div class="signup-section">
+            <h3>Register Now</h3>
+            <form action="/register" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <input type="text" name="fname" placeholder="First Name" required>
+                    <input type="text" name="lname" placeholder="Last Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="uname" placeholder="Username" required>
+                    <input type="password" name="pwd" placeholder="Password" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" name="email" placeholder="Enter Email" required>
+                    <input type="text" name="contact" placeholder="Enter Contact" required>
+                </div>
+                <div class="form-group">
+                    <input type="date" name="dob" placeholder="Date of Birth" required>
+                    <input type="file" name="image" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="add" placeholder="Enter Address" required>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label>User Type:</label>
+                        <input type="radio" name="type" value="Patient" required> Patient
+                        <input type="radio" name="type" value="Doctor" required> Doctor
+                    </div>
+                </div>
+                <button type="submit">Register</button>
+                <p><a href="#">By clicking Register, I agree to your terms</a></p>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

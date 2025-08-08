@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login/Signup Page</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f4f8;
+        }
+
+        .container {
+            display: flex;
+            width: 900px;
+            height: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin: 20px;
+        }
+
+        /* Add responsive styles */
+        @media screen and (max-width: 1024px) {
+            .container {
+                width: 90%;
+                max-width: 900px;
+                height: auto;
+                min-height: 550px;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                width: 95%;
+                height: auto;
+            }
+
+            .welcome-section {
+                padding: 30px 20px;
+                min-height: 250px;
+            }
+
+            .form-section {
+                padding: 30px 20px;
+            }
+
+            .welcome-section h2 {
+                font-size: 1.8em;
+            }
+
+            .form-section h3 {
+                font-size: 1.5em;
+            }
+
+            .form-section .form-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .form-section .form-group input,
+            .form-section .form-group select {
+                width: 100%;
+            }
+
+            .form-section .form-group input[type="radio"] {
+                margin-right: 8px;
+            }
+
+            .form-section .form-group label {
+                margin-right: 15px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .welcome-section {
+                padding: 20px 15px;
+                min-height: 200px;
+            }
+
+            .form-section {
+                padding: 20px 15px;
+            }
+
+            .welcome-section h2 {
+                font-size: 1.5em;
+            }
+
+            .welcome-section p {
+                font-size: 0.9em;
+            }
+
+            .welcome-section button {
+                padding: 10px 30px;
+                font-size: 0.9em;
+            }
+
+            .form-section h3 {
+                font-size: 1.3em;
+            }
+
+            .form-section button {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+
+            .form-section p {
+                font-size: 0.8em;
+            }
+        }
+
+        /* Add smooth transitions for better UX */
+        .welcome-section,
+        .form-section,
+        .form-section .form-group,
+        .form-section input,
+        .form-section select,
+        .form-section button {
+            transition: all 0.3s ease;
+        }
+
+        /* Improve form group layout for better responsiveness */
+        .form-section .form-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .form-section .form-group>* {
+            flex: 1 1 200px;
+        }
+
+        /* Improve radio button group layout */
+        .radio-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            flex-direction: row;
+            justify-content: flex-start;
+        }
+
+        .radio-group div {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .radio-group label {
+            margin-right: 5px;
+        }
+
+        .radio-group input[type="radio"] {
+            margin: 0;
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, #00C4B4, #1A3C34);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.5s ease;
+        }
+
+        .welcome-section h2 {
+            font-size: 2.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .welcome-section p {
+            font-size: 1em;
+            font-weight: 300;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .welcome-section button {
+            background: linear-gradient(90deg, #00C4B4, #1A3C34);
+            border: none;
+            color: white;
+            padding: 12px 40px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 400;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .welcome-section button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-section {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: white;
+            transition: all 0.5s ease;
+        }
+
+        .form-section h3 {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #1A3C34;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-section form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-section .form-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-section .form-group input,
+        .form-section .form-group select {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 0.9em;
+            color: #333;
+            background: #f9f9f9;
+            transition: border-color 0.3s;
+        }
+
+        .form-section .form-group input:focus,
+        .form-section .form-group select:focus {
+            outline: none;
+            border-color: #00C4B4;
+            background: white;
+        }
+
+        input[type="file"] {
+            background: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .form-section .form-group input[type="radio"] {
+            flex: none;
+            margin-right: 5px;
+        }
+
+        .form-section .form-group label {
+            font-size: 0.9em;
+            color: #333;
+            margin-right: 10px;
+        }
+
+        .form-section button {
+            width: 100%;
+            background: linear-gradient(90deg, #00C4B4, #1A3C34);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 400;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .form-section button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-section p {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .form-section p a {
+            color: #00C4B4;
+            text-decoration: none;
+            font-weight: 400;
+        }
+
+        .form-section p a:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Welcome Section (Toggles between Login and Signup messages) -->
+        <div class="welcome-section" id="welcome-section">
+            <div id="welcome-login">
+                <h2>Welcome Back!</h2>
+                <p>Already have an account? Login to continue your journey with us</p>
+                <button onclick="toggleForm('signup')">Sign Up</button>
+            </div>
+            <div id="welcome-signup" class="hidden">
+                <h2>Hello, Friend!</h2>
+                <p>Enter your details and start journey with us</p>
+                <button onclick="toggleForm('login')">Sign In</button>
+            </div>
+        </div>
+
+        <!-- Form Section (Toggles between Login and Signup forms) -->
+        <div class="form-section">
+            <!-- Login Form -->
+            <div id="login-form">
+                <h3>Login</h3>
+                {% if error %}
+                {% if error == "not" %}
+                <div style="color: red; margin-bottom: 15px; text-align: center;">Invalid username or password</div>
+                {% elif error == "notmember" %}
+                <div style="color: red; margin-bottom: 15px; text-align: center;">Your account is not approved yet</div>
+                {% endif %}
+                {% endif %}
+                <form action="{% url 'login' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="login">
+                    <div class="form-group">
+                        <input type="text" name="uname" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" name="pwd" placeholder="Password" required>
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+                <p style="text-align: center; margin-top: 15px;">
+                    <a href="{% url 'login_admin' %}" style="color: #00C4B4; text-decoration: none;">Admin Login</a>
+                </p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signup-form" class="hidden">
+                <h3>Register Now</h3>
+                {% if error %}
+                {% if error == "username_exists" %}
+                <div style="color: red; margin-bottom: 15px; text-align: center;">Username already exists. Please choose
+                    another one.</div>
+                {% elif error == "registration_error" %}
+                <div style="color: red; margin-bottom: 15px; text-align: center;">Error during registration. Please try
+                    again.</div>
+                {% elif error == "invalid_contact" %}
+                <div style="color: red; margin-bottom: 15px; text-align: center;">Please enter a valid 10-digit phone
+                    number.</div>
+                {% elif error == "create" %}
+                <div style="color: green; margin-bottom: 15px; text-align: center;">Registration successful! You can now
+                    login.</div>
+                {% endif %}
+                {% endif %}
+                <form action="{% url 'login' %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="register">
+                    <div class="form-group">
+                        <input type="text" name="fname" placeholder="First Name" required>
+                        <input type="text" name="lname" placeholder="Last Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="uname" placeholder="Username" required>
+                        <input type="password" name="pwd" placeholder="Password" required
+                            pattern="(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}"
+                            title="Password must be at least 6 characters and include a number and a special character.">
+
+                    </div>
+                    <div class="form-group">
+                        <input type="email" name="email" placeholder="Enter Email" required>
+                        <input type="tel" name="contact" placeholder="Enter Contact" pattern="[0-9]{10}"
+                            title="Please enter a valid 10-digit phone number" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="date" name="dob" placeholder="Date of Birth" required>
+                        <input type="file" name="image" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="add" placeholder="Enter Address" required>
+                        <div class="radio-group">
+                            <label>User Type:</label>
+                            <div>
+                                <input type="radio" name="type" value="Patient" required> Patient
+                            </div>
+                            <div>
+                                <input type="radio" name="type" value="Doctor" required> Doctor
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit">Register</button>
+                    <p>By clicking Register, I agree to your terms.</p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleForm(formType) {
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const welcomeLogin = document.getElementById('welcome-login');
+            const welcomeSignup = document.getElementById('welcome-signup');
+
+            if (formType === 'signup') {
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                welcomeLogin.classList.add('hidden');
+                welcomeSignup.classList.remove('hidden');
+            } else {
+                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                welcomeSignup.classList.add('hidden');
+                welcomeLogin.classList.remove('hidden');
+            }
+        }
+
+        // Show signup form if there was a registration attempt
+        {% if show_signup %}
+        document.addEventListener('DOMContentLoaded', function () {
+            toggleForm('signup');
+        });
+        {% endif %}
+
+        // Add contact number validation
+        document.addEventListener('DOMContentLoaded', function () {
+            const contactInput = document.querySelector('input[name="contact"]');
+            const signupForm = document.querySelector('#signup-form form');
+
+            contactInput.addEventListener('input', function (e) {
+                // Remove any non-digit characters
+                this.value = this.value.replace(/\D/g, '');
+
+                // Limit to 10 digits
+                if (this.value.length > 10) {
+                    this.value = this.value.slice(0, 10);
+                }
+            });
+
+            signupForm.addEventListener('submit', function (e) {
+                const contact = contactInput.value;
+                if (contact.length !== 10) {
+                    e.preventDefault();
+                    alert('Please enter a valid 10-digit phone number');
+                    contactInput.focus();
+                }
+            });
+        });
+
+        const passwordInput = signupForm.querySelector('input[name="pwd"]');
+
+        signupForm.addEventListener('submit', function (e) {
+            const password = passwordInput.value;
+            const passwordPattern = /^(?=.*\d)(?=.*[!@#$%^&*]).{6,}$/;
+
+            if (!passwordPattern.test(password)) {
+                e.preventDefault();
+                alert('Password must be at least 6 characters and include a number and a special character (!@#$%^&*).');
+                passwordInput.focus();
+            }
+        });
+
+    </script>
+</body>
+
+</html>
