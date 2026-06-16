@@ -1298,7 +1298,8 @@ def delete_searched(request,pid):
 @login_required(login_url="login")
 def View_Doctor(request):
     doc = Doctor.objects.all()
-    d = {'doc':doc}
+    categories = doc.exclude(category__isnull=True).exclude(category__exact='').values_list('category', flat=True).distinct().order_by('category')
+    d = {'doc':doc, 'categories':categories}
     return render(request,'view_doctor.html',d)
 
 @login_required(login_url="login")

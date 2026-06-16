@@ -1,267 +1,564 @@
-{% extends 'index.html' %}
-{% load static %}
-{% block body %}
+{% extends 'index.html' %} {% load static %} {% block body %}
 <style>
-    .search-container {
-        padding: 20px 15px;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        box-sizing: border-box;
+  .search-container {
+    padding: 20px 15px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .search-title {
+    color: #1a3c34;
+    margin: 0 0 20px 0;
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.5px;
+    padding: 0 10px;
+  }
+
+  .search-table {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: clamp(15px, 3vw, 28px);
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1300px;
+    overflow-x: auto;
+  }
+
+  /* Toolbar: search inputs + add button */
+  .doc-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .doc-toolbar-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .doc-toolbar-filters input,
+  .doc-toolbar-filters select {
+    padding: 10px 14px;
+    border: 1px solid #e2e6ea;
+    border-radius: 10px;
+    background: #f8f9fa;
+    font-size: 0.85rem;
+    color: #1a3c34;
+    width: 170px;
+    flex: 0 0 auto;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .doc-toolbar-filters input:focus,
+  .doc-toolbar-filters select:focus {
+    border-color: #00c4b4;
+    background: white;
+  }
+
+  .doc-toolbar-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-add-doctor {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(90deg, #00c4b4, #1a3c34);
+    color: white;
+    padding: 11px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
+  }
+
+  .btn-add-doctor:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    color: white;
+  }
+
+  /* Table */
+  table.display {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    font-size: clamp(0.85rem, 1.6vw, 0.95rem);
+    background: transparent;
+  }
+
+  table.display thead th {
+    background: #eef1f4 !important;
+    color: #495057 !important;
+    font-weight: 700;
+    border: none;
+    padding: 14px 12px;
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  table.display thead th:first-child {
+    border-radius: 10px 0 0 10px;
+  }
+
+  table.display thead th:last-child {
+    border-radius: 0 10px 10px 0;
+  }
+
+  table.display tbody tr,
+  table.display tbody tr.odd,
+  table.display tbody tr.even {
+    background-color: #f8f9fa !important;
+    box-shadow: none;
+    transition: background-color 0.2s;
+  }
+
+  table.display tbody tr:hover,
+  table.display tbody tr.odd:hover,
+  table.display tbody tr.even:hover {
+    background-color: #e9ecf1 !important;
+  }
+
+  table.display tbody tr:nth-child(odd),
+  table.display tbody tr:nth-child(even) {
+    background-color: #f8f9fa !important;
+  }
+
+  table.display tbody td {
+    background-color: transparent !important;
+  }
+
+  table.dataTable.no-footer {
+    border-bottom: none !important;
+  }
+
+  table.display tbody td {
+    padding: 14px 12px;
+    border: none;
+    color: #1a3c34;
+    vertical-align: middle;
+  }
+
+  table.display tbody td:first-child {
+    border-radius: 10px 0 0 10px;
+    color: #6c757d;
+    font-weight: 600;
+  }
+
+  table.display tbody td:last-child {
+    border-radius: 0 10px 10px 0;
+    text-align: center !important;
+  }
+
+  table.display tbody tr.no-records-row,
+  table.display tbody tr.no-records-row:hover {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  table.display tbody td.dataTables_empty {
+    width: 100%;
+    border-radius: 10px !important;
+    background-color: transparent !important;
+    color: #6c757d;
+    font-weight: 500;
+    text-align: center !important;
+    white-space: nowrap;
+    padding: 30px 12px !important;
+  }
+
+  table.display tbody td:nth-child(6),
+  table.display tbody td:nth-child(7) {
+    text-align: center;
+  }
+
+  .doctor-name-cell {
+    font-weight: 700;
+    color: #00897b;
+  }
+
+  .doctor-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+    background: #f8f9fa;
+    vertical-align: middle;
+    margin-right: 10px;
+    border: 2px solid #eef1f4;
+  }
+
+  /* Status pill */
+  .status-pill {
+    display: inline-block;
+    padding: 7px 18px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: white;
+  }
+
+  .status-pill.approved {
+    background: #00897b;
+  }
+
+  .status-pill.pending {
+    background: #8e44ec;
+  }
+
+  /* License link */
+  .license-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #00c4b4;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1px solid #00c4b4;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .license-link:hover {
+    background: #00c4b4;
+    color: white;
+  }
+
+  .license-missing {
+    display: block;
+    text-align: center;
+    color: #dc3545;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding-right: 4px;
+  }
+
+  /* Icon action buttons */
+  .action-buttons {
+    white-space: nowrap;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid #e2e6ea;
+    background: white;
+    color: #495057;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .icon-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  }
+
+  .icon-btn.edit:hover {
+    color: #007bff;
+    border-color: #007bff;
+  }
+  .icon-btn.approve:hover {
+    color: #28a745;
+    border-color: #28a745;
+  }
+  .icon-btn.withdraw:hover {
+    color: #8e44ec;
+    border-color: #8e44ec;
+  }
+  .icon-btn.delete:hover {
+    color: #dc3545;
+    border-color: #dc3545;
+  }
+
+  .no-data {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+    font-size: clamp(14px, 2vw, 16px);
+  }
+
+  .filter-cat{
+    cursor: pointer;
+  }
+
+  /* DataTables overrides — hide defaults, restyle pagination */
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_info {
+    display: none !important;
+  }
+
+  .dataTables_wrapper {
+    border-top: none !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    padding: 0;
+    border-top: none !important;
+    float: none !important;
+    width: 100%;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    min-width: 38px !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 14px !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e6ea !important;
+    background: white !important;
+    color: #1a3c34 !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+    background: #f1f3f5 !important;
+    border-color: #f1f3f5 !important;
+    color: #868e96 !important;
+    font-weight: 400 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #2f80ed !important;
+    border-color: #2f80ed !important;
+    color: white !important;
+    font-weight: 700 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #eef1f4 !important;
+    color: #1a3c34 !important;
+    border-color: #e2e6ea !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous:hover,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next:hover {
+    background: #e2e6ea !important;
+    color: #495057 !important;
+    border-color: #e2e6ea !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: #2f80ed !important;
+    color: white !important;
+    border-color: #2f80ed !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.4 !important;
+    cursor: default !important;
+  }
+
+  @media (max-width: 768px) {
+    .doc-toolbar {
+      flex-direction: column;
+      align-items: stretch;
     }
-    .search-title {
-        color: #1A3C34;
-        margin: 0 0 25px 0;
-        font-size: clamp(1.5rem, 4vw, 2.2rem);
-        font-weight: 700;
-        text-align: center;
-        letter-spacing: 0.5px;
-        padding: 0 10px;
+    .doc-toolbar-actions {
+      justify-content: stretch;
     }
-    .search-table {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.10);
-        padding: clamp(15px, 3vw, 32px);
-        margin: 0 auto;
-        width: 100%;
-        max-width: 1200px;
-        overflow-x: auto;
-    }
-    table.display {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        font-size: clamp(0.9rem, 2vw, 1.05rem);
-        background: white;
-    }
-    table.display thead th {
-        background: linear-gradient(90deg, #00C4B4, #1A3C34) !important;
-        color: white !important;
-        font-weight: 600;
-        border: none;
-        padding: clamp(10px, 2vw, 14px) clamp(6px, 1vw, 8px);
-        font-size: clamp(0.9rem, 2vw, 1.08rem);
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-    }
-    table.display tbody td {
-        padding: clamp(8px, 2vw, 12px) clamp(6px, 1vw, 8px);
-        border-bottom: 1.5px solid #f0f0f0;
-        color: #1A3C34;
-        vertical-align: middle;
-    }
-    .btn-info, .btn-danger, .btn-success, .btn-primary {
-        border-radius: 6px;
-        padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 18px);
-        font-size: clamp(0.85rem, 1.5vw, 1rem);
-        font-weight: 600;
-        margin: 2px;
-        transition: all 0.3s;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        white-space: nowrap;
-    }
-    .btn-danger { background: #dc3545; color: white; }
-    .btn-danger:hover { background: #c82333; }
-    .btn-success { background: #28a745; color: white; }
-    .btn-success:hover { background: #218838; }
-    .btn-primary { background: #007bff; color: white; }
-    .btn-primary:hover { background: #0056b3; }
-    .btn-info { background: #00C4B4; color: white; }
-    .btn-info:hover { background: #1A3C34; }
-    .doctor-image {
-        width: clamp(60px, 10vw, 80px);
-        height: clamp(60px, 10vw, 80px);
-        object-fit: cover;
-        border-radius: 8px;
-        background: #f8f9fa;
-    }
-    .dataTables_filter {
-        margin-bottom: 15px;
-    }
-    .dataTables_filter input {
-        width: 100%;
-        max-width: 300px;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+    .btn-add-doctor {
+      width: 100%;
+      justify-content: center;
     }
     .action-buttons {
-        white-space: nowrap;
-        display: flex;
-        gap: 5px;
-        flex-wrap: wrap;
-        justify-content: center;
+      flex-wrap: wrap;
     }
-    .no-data {
-        text-align: center;
-        padding: 20px;
-        color: #6c757d;
-        font-size: clamp(14px, 2vw, 16px);
-    }
-
-    /* Responsive breakpoints */
-    @media (max-width: 1200px) {
-        .search-table {
-            margin: 0 15px;
-        }
-    }
-
-    @media (max-width: 992px) {
-        .search-container {
-            padding: 15px 10px;
-        }
-        table.display thead th,
-        table.display tbody td {
-            padding: 8px 6px;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .search-table {
-            padding: 15px 10px;
-            border-radius: 10px;
-        }
-        .dataTables_wrapper {
-            overflow-x: auto;
-        }
-        .action-buttons {
-            flex-direction: column;
-            align-items: center;
-        }
-        .btn-info, .btn-danger, .btn-success, .btn-primary {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .search-container {
-            padding: 10px 5px;
-        }
-        .search-title {
-            margin-bottom: 15px;
-        }
-        .search-table {
-            padding: 10px 5px;
-        }
-        table.display thead th,
-        table.display tbody td {
-            padding: 6px 4px;
-            font-size: 0.9rem;
-        }
-        .doctor-image {
-            width: 50px;
-            height: 50px;
-        }
-    }
-
-    /* DataTables responsive styles */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter {
-        text-align: left;
-        margin-bottom: 10px;
-    }
-
-    @media screen and (max-width: 767px) {
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter {
-            text-align: center;
-        }
-        .dataTables_wrapper .dataTables_info,
-        .dataTables_wrapper .dataTables_paginate {
-            text-align: center;
-            margin-top: 10px;
-        }
-    }
+  }
 </style>
+
 <div class="search-container">
-    <h1 class="search-title">Doctor Records</h1>
-    <div class="search-table">
-        <table id="example" class="display" style="width:100%">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Full Name</th>
-                    <th>Image</th>
-                    <th>Email</th>
-                    <th>Contact</th>
-                    <th>Address</th>
-                    <th>Category</th>
-                    <th>License</th>
-                    <th>Status</th>
-                    <th>Assign</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for i in doc %}
-                <tr>
-                    <td>{{forloop.counter}}</td>
-                    <td>{{i.user.first_name}} {{i.user.last_name}}</td>
-                    <td><img src="{{i.image.url}}" class="doctor-image"></td>
-                    <td>{{i.user.email}}</td>
-                    <td>{{i.contact}}</td>
-                    <td>{{i.address}}</td>
-                    <td>{{i.category}}</td>
-                    <td>
-                        {% if i.license_document %}
-                        <a href="{{i.license_document.url}}" target="_blank" class="btn btn-info" style="white-space: nowrap;">
-                            <i class="fa fa-file-text-o"></i> Review
-                        </a>
-                        {% else %}
-                        <span style="color:#dc3545; font-size:0.85em;">Not submitted</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if i.status == 1 %}
-                        <b>Authorized</b>
-                        {% else %}
-                        <b>Unauthorized</b>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if i.status == 1 %}
-                        <a href="{% url 'assign_status' i.id %}" onclick="return confirm('Do you want to withdraw approval to doctor : {{i.user.first_name}}?')">
-                            <button class="btn btn-danger">Cancel</button>
-                        </a>
-                        {% else %}
-                        <a href="{% url 'assign_status' i.id %}" onclick="return confirm('Do you want to give approve to doctor : {{i.user.first_name}}?')">
-                            <button class="btn btn-success">Assign</button>
-                        </a>
-                        {% endif %}
-                    </td>
-                    <td class="action-buttons">
-                        <a href="{% url 'change_doctor' i.id %}" class="btn btn-primary"><i class="fa fa-edit"></i></a>
-                        <a href="{% url 'delete_doctor' i.id %}" class="btn btn-danger" onclick="return confirm('Are you sure?')">
-                            <i class="fa fa-trash-o"></i>
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+  <h1 class="search-title">Doctor Records</h1>
+  <div class="search-table">
+    <div class="doc-toolbar">
+      <div class="doc-toolbar-filters">
+        <input type="text" id="filter-name" placeholder="Search by Name" />
+        <input type="text" id="filter-email" placeholder="Search by Email" />
+        <select id="filter-category" class="filter-cat">
+          <option value="">Filter by Category</option>
+          {% for c in categories %}
+          <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="doc-toolbar-actions">
+        <a href="{% url 'add_doctor' %}" class="btn-add-doctor"
+          ><i class="fa fa-plus"></i> Add Doctor</a
+        >
+      </div>
     </div>
+
+    <table id="example" class="display" style="width: 100%">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Doctor</th>
+          <th>Email</th>
+          <th>Contact</th>
+          <th>Category</th>
+          <th>License</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in doc %}
+        <tr>
+          <td>{{forloop.counter}}</td>
+          <td>
+            <img src="{{i.image.url}}" class="doctor-image" />
+            <span class="doctor-name-cell"
+              >{{i.user.first_name}} {{i.user.last_name}}</span
+            >
+          </td>
+          <td>{{i.user.email}}</td>
+          <td>{{i.contact}}</td>
+          <td>{{i.category}}</td>
+          <td>
+            {% if i.license_document %}
+            <a
+              href="{{i.license_document.url}}"
+              target="_blank"
+              class="license-link"
+            >
+              <i class="fa fa-file-text-o"></i> Review
+            </a>
+            {% else %}
+            <span class="license-missing">-</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if i.status == 1 %}
+            <span class="status-pill approved">Approved</span>
+            {% else %}
+            <span class="status-pill pending">Pending</span>
+            {% endif %}
+          </td>
+          <td class="action-buttons">
+            <a
+              href="{% url 'change_doctor' i.id %}"
+              class="icon-btn edit"
+              title="Edit"
+            >
+              <i class="fa fa-pencil"></i>
+            </a>
+            {% if i.status == 1 %}
+            <a
+              href="{% url 'assign_status' i.id %}"
+              class="icon-btn withdraw"
+              title="Withdraw approval"
+              onclick="return confirm('Do you want to withdraw approval to doctor : {{i.user.first_name}}?')"
+            >
+              <i class="fa fa-ban"></i>
+            </a>
+            {% else %}
+            <a
+              href="{% url 'assign_status' i.id %}"
+              class="icon-btn approve"
+              title="Approve"
+              onclick="return confirm('Do you want to give approve to doctor : {{i.user.first_name}}?')"
+            >
+              <i class="fa fa-check"></i>
+            </a>
+            {% endif %}
+            <a
+              href="{% url 'delete_doctor' i.id %}"
+              class="icon-btn delete"
+              title="Delete"
+              onclick="return confirm('Are you sure?');"
+            >
+              <i class="fa fa-trash-o"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 <script>
-$(document).ready(function() {
-    $('#example').DataTable({
-        responsive: true,
-        destroy: true,
-        "language": {
-            "search": "Search:",
-            "lengthMenu": "Show _MENU_ entries per page",
-            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-            "infoEmpty": "No entries to show",
-            "infoFiltered": "(filtered from _MAX_ total entries)"
+  $(document).ready(function () {
+    var table = $("#example").DataTable({
+      destroy: true,
+      dom: "rtp",
+      pagingType: "simple_numbers",
+      pageLength: 10,
+      language: {
+        emptyTable: "No matching records found",
+        zeroRecords: "No matching records found",
+        paginate: {
+          previous: '<i class="fa fa-chevron-left"></i>',
+          next: '<i class="fa fa-chevron-right"></i>',
         },
-        "pageLength": 10,
-        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]]
+      },
+      drawCallback: function () {
+        var pageInfo = this.api().page.info();
+        $(this)
+          .closest(".dataTables_wrapper")
+          .find(".dataTables_paginate")
+          .toggle(pageInfo.pages > 1);
+        $(this).find("tbody tr").has("td.dataTables_empty")
+          .addClass("no-records-row");
+      },
     });
-});
+
+    $("#filter-name").on("keyup", function () {
+      table.column(1).search(this.value).draw();
+    });
+
+    $("#filter-email").on("keyup", function () {
+      table.column(2).search(this.value).draw();
+    });
+
+    $("#filter-category").on("change", function () {
+      table.column(4).search(this.value).draw();
+    });
+  });
 </script>
 {% endblock %}
