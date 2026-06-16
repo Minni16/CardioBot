@@ -1,241 +1,580 @@
 {% extends 'index.html' %}
 {% load static %}
 {% block body %}
-
 <style>
-    .search-container {
-        padding: 20px 15px;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        box-sizing: border-box;
+  .search-container {
+    padding: 20px 15px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .search-title {
+    color: #1a3c34;
+    margin: 0 0 20px 0;
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.5px;
+    padding: 0 10px;
+  }
+
+  .search-table {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: clamp(15px, 3vw, 28px);
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1300px;
+    overflow-x: auto;
+  }
+
+  /* Toolbar: search inputs */
+  .doc-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .doc-toolbar-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .doc-toolbar-filters input,
+  .doc-toolbar-filters select {
+    padding: 10px 14px;
+    border: 1px solid #e2e6ea;
+    border-radius: 10px;
+    background: #f8f9fa;
+    font-size: 0.85rem;
+    color: #1a3c34;
+    width: 170px;
+    flex: 0 0 auto;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .doc-toolbar-filters input:focus,
+  .doc-toolbar-filters select:focus {
+    border-color: #00c4b4;
+    background: white;
+  }
+
+  /* Table */
+  table.display {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    font-size: clamp(0.85rem, 1.6vw, 0.95rem);
+    background: transparent;
+  }
+
+  table.display thead th {
+    background: #eef1f4 !important;
+    color: #495057 !important;
+    font-weight: 700;
+    border: none;
+    padding: 14px 12px;
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  table.display thead th:first-child {
+    border-radius: 10px 0 0 10px;
+  }
+
+  table.display thead th:last-child {
+    border-radius: 0 10px 10px 0;
+    text-align: center;
+  }
+
+  table.display tbody tr,
+  table.display tbody tr.odd,
+  table.display tbody tr.even {
+    background-color: #f8f9fa !important;
+    box-shadow: none;
+    transition: background-color 0.2s;
+  }
+
+  table.display tbody tr:hover,
+  table.display tbody tr.odd:hover,
+  table.display tbody tr.even:hover {
+    background-color: #e9ecf1 !important;
+  }
+
+  table.display tbody td {
+    background-color: transparent !important;
+  }
+
+  table.dataTable.no-footer {
+    border-bottom: none !important;
+  }
+
+  table.display tbody td {
+    padding: 14px 12px;
+    border: none;
+    color: #1a3c34;
+    vertical-align: middle;
+  }
+
+  table.display tbody td:first-child {
+    border-radius: 10px 0 0 10px;
+    color: #6c757d;
+    font-weight: 600;
+  }
+
+  table.display tbody td:last-child {
+    border-radius: 0 10px 10px 0;
+    text-align: center !important;
+  }
+
+  table.display tbody tr.no-records-row,
+  table.display tbody tr.no-records-row:hover {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  table.display tbody td.dataTables_empty {
+    width: 100%;
+    border-radius: 10px !important;
+    background-color: transparent !important;
+    color: #6c757d;
+    font-weight: 500;
+    text-align: center !important;
+    white-space: nowrap;
+    padding: 30px 12px !important;
+  }
+
+  .feedback-name-cell {
+    font-weight: 700;
+    color: #00897b;
+  }
+
+  .feedback-message-cell {
+    display: inline-block;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    cursor: help;
+  }
+
+  /* Icon action buttons */
+  .action-buttons {
+    white-space: nowrap;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid #e2e6ea;
+    background: white;
+    color: #495057;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .icon-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  }
+
+  .icon-btn.delete:hover {
+    color: #dc3545;
+    border-color: #dc3545;
+  }
+
+  .icon-btn.view:hover {
+    color: #00897b;
+    border-color: #00897b;
+  }
+
+  /* Message modal */
+  .feedback-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 60, 52, 0.45);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .feedback-modal-overlay.open {
+    display: flex;
+  }
+
+  .feedback-modal {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+  }
+
+  .feedback-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    background: #eef1f4;
+  }
+
+  .feedback-modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #1a3c34;
+    font-weight: 700;
+  }
+
+  .feedback-modal-header span {
+    display: block;
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  .feedback-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: white;
+    color: #495057;
+    font-size: 1rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .feedback-modal-close:hover {
+    color: #dc3545;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .feedback-modal-body {
+    padding: 22px;
+    overflow-y: auto;
+    color: #1a3c34;
+  }
+
+  .feedback-modal-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #eef1f4;
+  }
+
+  .feedback-modal-meta div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .feedback-modal-meta span {
+    font-size: 0.75rem;
+    color: #868e96;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .feedback-modal-meta strong {
+    font-size: 0.9rem;
+    color: #1a3c34;
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  .feedback-modal-message-label {
+    font-size: 0.75rem;
+    color: #868e96;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+  }
+
+  #feedback-modal-message {
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .no-data {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+    font-size: clamp(14px, 2vw, 16px);
+  }
+
+  /* DataTables overrides — hide defaults, restyle pagination */
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_info {
+    display: none !important;
+  }
+
+  .dataTables_wrapper {
+    border-top: none !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    padding: 0;
+    border-top: none !important;
+    float: none !important;
+    width: 100%;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    min-width: 38px !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 14px !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e6ea !important;
+    background: white !important;
+    color: #1a3c34 !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+    background: #f1f3f5 !important;
+    border-color: #f1f3f5 !important;
+    color: #868e96 !important;
+    font-weight: 400 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #2f80ed !important;
+    border-color: #2f80ed !important;
+    color: white !important;
+    font-weight: 700 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #eef1f4 !important;
+    color: #1a3c34 !important;
+    border-color: #e2e6ea !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous:hover,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next:hover {
+    background: #e2e6ea !important;
+    color: #495057 !important;
+    border-color: #e2e6ea !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: #2f80ed !important;
+    color: white !important;
+    border-color: #2f80ed !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.4 !important;
+    cursor: default !important;
+  }
+
+  @media (max-width: 768px) {
+    .doc-toolbar {
+      flex-direction: column;
+      align-items: stretch;
     }
-    .search-title {
-        color: #1A3C34;
-        margin: 0 0 25px 0;
-        font-size: clamp(1.5rem, 4vw, 2.2rem);
-        font-weight: 700;
-        text-align: center;
-        letter-spacing: 0.5px;
-        padding: 0 10px;
-    }
-    .search-table {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.10);
-        padding: clamp(15px, 3vw, 32px);
-        margin: 0 auto;
-        width: 100%;
-        max-width: 1200px;
-        overflow-x: auto;
-    }
-    table.display {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        font-size: clamp(0.9rem, 2vw, 1.05rem);
-        background: white;
-    }
-    table.display thead th {
-        background: linear-gradient(90deg, #00C4B4, #1A3C34) !important;
-        color: white !important;
-        font-weight: 600;
-        border: none;
-        padding: clamp(10px, 2vw, 14px) clamp(6px, 1vw, 8px);
-        font-size: clamp(0.9rem, 2vw, 1.08rem);
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-    }
-    table.display tbody td {
-        padding: clamp(8px, 2vw, 12px) clamp(6px, 1vw, 8px);
-        border-bottom: 1.5px solid #f0f0f0;
-        color: #1A3C34;
-        vertical-align: middle;
-    }
-    .btn-danger {
-        background: #dc3545;
-        color: white;
-        border-radius: 6px;
-        padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 18px);
-        font-size: clamp(0.85rem, 1.5vw, 1em);
-        font-weight: 600;
-        margin: 2px;
-        transition: all 0.3s;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        white-space: nowrap;
-    }
-    .btn-danger:hover { background: #c82333; }
-    .user-type {
-        font-size: clamp(0.8em, 1.5vw, 0.9em);
-        padding: 2px 6px;
-        border-radius: 4px;
-        margin-left: 5px;
-        white-space: nowrap;
-    }
-    .user-type.doctor {
-        background-color: #e3f2fd;
-        color: #1565c0;
-    }
-    .user-type.patient {
-        background-color: #f1f8e9;
-        color: #558b2f;
-    }
-    .dataTables_filter {
-        margin-bottom: 15px;
-    }
-    .dataTables_filter input {
-        width: 100%;
-        max-width: 300px;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+    .doc-toolbar-filters input,
+    .doc-toolbar-filters select {
+      width: 100%;
     }
     .action-buttons {
-        white-space: nowrap;
-        display: flex;
-        gap: 5px;
-        flex-wrap: wrap;
-        justify-content: center;
+      flex-wrap: wrap;
     }
-    .no-data {
-        text-align: center;
-        padding: 20px;
-        color: #6c757d;
-        font-size: clamp(14px, 2vw, 16px);
+    .feedback-message-cell {
+      max-width: 160px;
     }
-
-    /* Responsive breakpoints */
-    @media (max-width: 1200px) {
-        .search-table {
-            margin: 0 15px;
-        }
-    }
-
-    @media (max-width: 992px) {
-        .search-container {
-            padding: 15px 10px;
-        }
-        table.display thead th,
-        table.display tbody td {
-            padding: 8px 6px;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .search-table {
-            padding: 15px 10px;
-            border-radius: 10px;
-        }
-        .dataTables_wrapper {
-            overflow-x: auto;
-        }
-        .action-buttons {
-            flex-direction: column;
-            align-items: center;
-        }
-        .btn-danger {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .search-container {
-            padding: 10px 5px;
-        }
-        .search-title {
-            margin-bottom: 15px;
-        }
-        .search-table {
-            padding: 10px 5px;
-        }
-        table.display thead th,
-        table.display tbody td {
-            padding: 6px 4px;
-            font-size: 0.9rem;
-        }
-    }
-
-    /* DataTables responsive styles */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter {
-        text-align: left;
-        margin-bottom: 10px;
-    }
-
-    @media screen and (max-width: 767px) {
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter {
-            text-align: center;
-        }
-        .dataTables_wrapper .dataTables_info,
-        .dataTables_wrapper .dataTables_paginate {
-            text-align: center;
-            margin-top: 10px;
-        }
-    }
+  }
 </style>
 
 <div class="search-container">
-    <h1 class="search-title">Feedback Records</h1>
-    <div class="search-table">
-        <table id="example" class="display" style="width:100%">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>User Info</th>
-                    <th>Email</th>
-                    <th>Contact</th>
-                    <th>Date</th>
-                    <th>Message</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for i in dis %}
-                <tr>
-                    <td>{{forloop.counter}}</td>
-                    <td>
-                        {{i.name}}
-                    </td>
-                    <td>{{i.email}}</td>
-                    <td>
-                        {{i.contact|default:"-"}}
-                    </td>
-                    <td>{{i.date|date:"M d, Y"}}</td>
-                    <td>{{i.messages}}</td>
-                    <td class="action-buttons">
-                        <a href="{% url 'delete_feedback' i.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this feedback?')">
-                            <i class="fa fa-trash-o"></i>
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+  <h1 class="search-title">Feedback Records</h1>
+  <div class="search-table">
+    <div class="doc-toolbar">
+      <div class="doc-toolbar-filters">
+        <input type="text" id="filter-name" placeholder="Search by Name" />
+        <input type="text" id="filter-email" placeholder="Search by Email" />
+      </div>
     </div>
+
+    <table id="example" class="display" style="width: 100%">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>User Info</th>
+          <th>Email</th>
+          <th>Contact</th>
+          <th>Date</th>
+          <th>Subject</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in dis %}
+        <tr>
+          <td>{{forloop.counter}}</td>
+          <td><span class="feedback-name-cell">{{i.name}}</span></td>
+          <td>{{i.email}}</td>
+          <td>{{i.contact|default:"-"}}</td>
+          <td>{{i.date|date:"M d, Y"}}</td>
+          <td>
+            <span class="feedback-message-cell" title="{{i.subject}}">{{i.subject|default:"-"}}</span>
+          </td>
+          <td class="action-buttons">
+            <button
+              type="button"
+              class="icon-btn view"
+              title="Read full message"
+              data-name="{{i.name}}"
+              data-email="{{i.email}}"
+              data-contact="{{i.contact|default:'-'}}"
+              data-date="{{i.date|date:'M d, Y'}}"
+              data-subject="{{i.subject|default:'-'}}"
+              data-message="{{i.messages}}"
+              onclick="openFeedbackModal(this)"
+            >
+              <i class="fa fa-eye"></i>
+            </button>
+            <a
+              href="{% url 'delete_feedback' i.id %}"
+              class="icon-btn delete"
+              title="Delete"
+              onclick="return confirm('Are you sure you want to delete this feedback?');"
+            >
+              <i class="fa fa-trash-o"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="feedback-modal-overlay" id="feedback-modal-overlay" onclick="if(event.target===this) closeFeedbackModal();">
+  <div class="feedback-modal">
+    <div class="feedback-modal-header">
+      <div>
+        <h3 id="feedback-modal-name"></h3>
+        <span>Feedback details</span>
+      </div>
+      <button type="button" class="feedback-modal-close" onclick="closeFeedbackModal();">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+    <div class="feedback-modal-body">
+      <div class="feedback-modal-meta">
+        <div><span>Email</span><strong id="feedback-modal-email"></strong></div>
+        <div><span>Contact</span><strong id="feedback-modal-contact"></strong></div>
+        <div><span>Date</span><strong id="feedback-modal-date"></strong></div>
+        <div><span>Subject</span><strong id="feedback-modal-subject"></strong></div>
+      </div>
+      <div class="feedback-modal-message-label">Message</div>
+      <div id="feedback-modal-message"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-$(document).ready(function() {
-    $('#example').DataTable({
-        responsive: true,
-        destroy: true,
-        "language": {
-            "search": "Search:",
-            "lengthMenu": "Show _MENU_ entries per page",
-            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-            "infoEmpty": "No entries to show",
-            "infoFiltered": "(filtered from _MAX_ total entries)"
-        },
-        "pageLength": 10,
-        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]]
-    });
-});
-</script>
+  function openFeedbackModal(btn) {
+    document.getElementById("feedback-modal-name").textContent = btn.dataset.name;
+    document.getElementById("feedback-modal-email").textContent = btn.dataset.email;
+    document.getElementById("feedback-modal-contact").textContent = btn.dataset.contact;
+    document.getElementById("feedback-modal-date").textContent = btn.dataset.date;
+    document.getElementById("feedback-modal-subject").textContent = btn.dataset.subject;
+    document.getElementById("feedback-modal-message").textContent = btn.dataset.message;
+    document.getElementById("feedback-modal-overlay").classList.add("open");
+  }
 
+  function closeFeedbackModal() {
+    document.getElementById("feedback-modal-overlay").classList.remove("open");
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeFeedbackModal();
+  });
+
+  $(document).ready(function () {
+    var table = $("#example").DataTable({
+      destroy: true,
+      dom: "rtp",
+      pagingType: "simple_numbers",
+      pageLength: 10,
+      language: {
+        emptyTable: "No matching records found",
+        zeroRecords: "No matching records found",
+        paginate: {
+          previous: '<i class="fa fa-chevron-left"></i>',
+          next: '<i class="fa fa-chevron-right"></i>',
+        },
+      },
+      drawCallback: function () {
+        var pageInfo = this.api().page.info();
+        $(this)
+          .closest(".dataTables_wrapper")
+          .find(".dataTables_paginate")
+          .toggle(pageInfo.pages > 1);
+        $(this).find("tbody tr").has("td.dataTables_empty")
+          .addClass("no-records-row");
+      },
+    });
+
+    $("#filter-name").on("keyup", function () {
+      table.column(1).search(this.value).draw();
+    });
+
+    $("#filter-email").on("keyup", function () {
+      table.column(2).search(this.value).draw();
+    });
+  });
+</script>
 {% endblock %}
