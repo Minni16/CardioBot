@@ -117,26 +117,19 @@
     <form action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <!-- Patient Information -->
-        <div class="form-section">
-            <div class="section-title">Patient Information</div>
-            <div class="heart-form-grid">
-                <div class="heart-form-group">
-                    <label for="patient_name">Patient Name</label>
-                    <input type="text" id="patient_name" name="patient_name" placeholder="Enter patient's full name" required>
-                </div>
-                <div class="heart-form-group">
-                    <label for="patient_contact">Patient Contact</label>
-                    <input type="text" id="patient_contact" name="patient_contact" placeholder="Enter patient's contact number" required>
-                    <small>10-digit phone number</small>
-                </div>
-            </div>
-        </div>
-
         <!-- Basic Information -->
         <div class="form-section">
             <div class="section-title">Basic Information</div>
             <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label for="patient_name">Patient Name</label>
+                    <input type="text" id="patient_name" name="patient_name" placeholder="Enter full name" required>
+                </div>
+                <div class="heart-form-group">
+                    <label for="patient_contact">Patient Contact</label>
+                    <input type="text" id="patient_contact" name="patient_contact" placeholder="Enter contact number" required>
+                    <small>10-digit phone number</small>
+                </div>
                 <div class="heart-form-group">
                     <label>Age <small>(in years)</small></label>
                     <input type="number" name="age" placeholder="20-100" min="1" max="120" required>
