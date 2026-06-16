@@ -31,4 +31,5 @@ urlpatterns = [
     path('assign_status/<int:pid>', views.assign_status, name='assign_status'),
     path('view_prediction_history/<int:search_id>', views.view_prediction_history, name='view_prediction_history'),
     path('add_heartdetail_patient/', views.add_heartdetail_patient, name='add_heartdetail_patient'),
-] 
+    path('api/nearby-hospitals/', views.nearby_hospitals, name='nearby_hospitals'),
+]

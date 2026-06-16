@@ -1,0 +1,456 @@
+{
+  "feature_count": 7267,
+  "geometry_types": {
+    "POINT": 6465,
+    "POLYGON": 799,
+    "MULTIPOLYGON": 2,
+    "LINESTRING": 1
+  },
+  "bbox": [
+    80.0619202,
+    26.4202442,
+    88.1580828,
+    30.1522132
+  ],
+  "columns": [
+    {
+      "name": "id",
+      "type": "VARCHAR",
+      "null_count": 0,
+      "null_percent": 0.0,
+      "distinct_count": 7267,
+      "top_values": []
+    },
+    {
+      "name": "name",
+      "type": "VARCHAR",
+      "null_count": 922,
+      "null_percent": 12.69,
+      "distinct_count": 5888,
+      "top_values": []
+    },
+    {
+      "name": "name_en",
+      "type": "VARCHAR",
+      "null_count": 5983,
+      "null_percent": 82.33,
+      "distinct_count": 1227,
+      "top_values": []
+    },
+    {
+      "name": "name_ne",
+      "type": "VARCHAR",
+      "null_count": 6349,
+      "null_percent": 87.37,
+      "distinct_count": 855,
+      "top_values": [
+        {
+          "value": "\u0915\u094d\u0932\u093f\u0928\u093f\u0915",
+          "count": 10
+        },
+        {
+          "value": "\u0906\u0927\u093e\u0930\u092d\u0942\u0924 \u0938\u094d\u0935\u093e\u0938\u094d\u0925\u094d\u092f \u091a\u094c\u0915\u0940",
+          "count": 10
+        },
+        {
+          "value": "",
+          "count": 8
+        },
+        {
+          "value": "\u0938\u094d\u0935\u093e\u0938\u094d\u0925\u094d\u092f \u091a\u094c\u0915\u0940",
+          "count": 8
+        },
+        {
+          "value": "\u0906\u0927\u093e\u0930\u092d\u0941\u0924 \u0938\u094d\u0935\u093e\u0938\u094d\u0925\u094d\u092f \u0915\u0947\u0928\u094d\u0926\u094d\u0930",
+          "count": 8
+        }
+      ]
+    },
+    {
+      "name": "amenity",
+      "type": "VARCHAR",
+      "null_count": 531,
+      "null_percent": 7.31,
+      "distinct_count": 8,
+      "top_values": [
+        {
+          "value": "clinic",
+          "count": 2800
+        },
+        {
+          "value": "hospital",
+          "count": 1763
+        },
+        {
+          "value": "pharmacy",
+          "count": 1697
+        },
+        {
+          "value": "dentist",
+          "count": 383
+        },
+        {
+          "value": "doctors",
+          "count": 81
+        }
+      ]
+    },
+    {
+      "name": "healthcare",
+      "type": "VARCHAR",
+      "null_count": 5546,
+      "null_percent": 76.32,
+      "distinct_count": 40,
+      "top_values": [
+        {
+          "value": "hospital",
+          "count": 434
+        },
+        {
+          "value": "clinic",
+          "count": 347
+        },
+        {
+          "value": "yes",
+          "count": 296
+        },
+        {
+          "value": "pharmacy",
+          "count": 272
+        },
+        {
+          "value": "dentist",
+          "count": 101
+        }
+      ]
+    },
+    {
+      "name": "operator",
+      "type": "VARCHAR",
+      "null_count": 6559,
+      "null_percent": 90.26,
+      "distinct_count": 234,
+      "top_values": [
+        {
+          "value": "government",
+          "count": 290
+        },
+        {
+          "value": "private",
+          "count": 66
+        },
+        {
+          "value": "Government",
+          "count": 35
+        },
+        {
+          "value": "Private",
+          "count": 30
+        },
+        {
+          "value": "community",
+          "count": 13
+        }
+      ]
+    },
+    {
+      "name": "phone",
+      "type": "VARCHAR",
+      "null_count": 6159,
+      "null_percent": 84.75,
+      "distinct_count": 1088,
+      "top_values": []
+    },
+    {
+      "name": "website",
+      "type": "VARCHAR",
+      "null_count": 7162,
+      "null_percent": 98.56,
+      "distinct_count": 102,
+      "top_values": [
+        {
+          "value": "http://www.bpkihs.edu",
+          "count": 2
+        },
+        {
+          "value": "https://www.inf.org/",
+          "count": 2
+        },
+        {
+          "value": "https://www.karunahospital.com.np/",
+          "count": 2
+        },
+        {
+          "value": "https://www.lokhitdental.com.np/",
+          "count": 1
+        },
+        {
+          "value": "http://www.vatsalya.com.np/",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "name": "addr_full",
+      "type": "VARCHAR",
+      "null_count": 7267,
+      "null_percent": 100.0,
+      "distinct_count": 0,
+      "top_values": []
+    },
+    {
+      "name": "addr_city",
+      "type": "VARCHAR",
+      "null_count": 6841,
+      "null_percent": 94.14,
+      "distinct_count": 161,
+      "top_values": [
+        {
+          "value": "khajura-RM",
+          "count": 48
+        },
+        {
+          "value": "Birendranagar",
+          "count": 30
+        },
+        {
+          "value": "\u0930\u093e\u092a\u094d\u0924\u0940 \u0917\u093e\u0909\u0901\u092a\u093e\u0932\u093f\u0915\u093e \u0926\u093e\u0919",
+          "count": 23
+        },
+        {
+          "value": "Kathmandu",
+          "count": 22
+        },
+        {
+          "value": "khajura rm",
+          "count": 20
+        }
+      ]
+    },
+    {
+      "name": "adm0_pcode",
+      "type": "VARCHAR",
+      "null_count": 0,
+      "null_percent": 0.0,
+      "distinct_count": 1,
+      "top_values": [
+        {
+          "value": "NPL",
+          "count": 7267
+        }
+      ]
+    },
+    {
+      "name": "adm0_name",
+      "type": "VARCHAR",
+      "null_count": 0,
+      "null_percent": 0.0,
+      "distinct_count": 1,
+      "top_values": [
+        {
+          "value": "Nepal",
+          "count": 7267
+        }
+      ]
+    },
+    {
+      "name": "adm1_pcode",
+      "type": "VARCHAR",
+      "null_count": 1,
+      "null_percent": 0.01,
+      "distinct_count": 7,
+      "top_values": [
+        {
+          "value": "NP03",
+          "count": 2343
+        },
+        {
+          "value": "NP05",
+          "count": 1446
+        },
+        {
+          "value": "NP02",
+          "count": 1105
+        },
+        {
+          "value": "NP04",
+          "count": 1094
+        },
+        {
+          "value": "NP06",
+          "count": 498
+        }
+      ]
+    },
+    {
+      "name": "adm1_name",
+      "type": "VARCHAR",
+      "null_count": 1,
+      "null_percent": 0.01,
+      "distinct_count": 7,
+      "top_values": [
+        {
+          "value": "Bagmati",
+          "count": 2343
+        },
+        {
+          "value": "Lumbini",
+          "count": 1446
+        },
+        {
+          "value": "Madhesh",
+          "count": 1105
+        },
+        {
+          "value": "Gandaki",
+          "count": 1094
+        },
+        {
+          "value": "Karnali",
+          "count": 498
+        }
+      ]
+    },
+    {
+      "name": "adm2_pcode",
+      "type": "VARCHAR",
+      "null_count": 1,
+      "null_percent": 0.01,
+      "distinct_count": 77,
+      "top_values": [
+        {
+          "value": "NP0327",
+          "count": 1292
+        },
+        {
+          "value": "NP0439",
+          "count": 652
+        },
+        {
+          "value": "NP0557",
+          "count": 409
+        },
+        {
+          "value": "NP0548",
+          "count": 276
+        },
+        {
+          "value": "NP0325",
+          "count": 249
+        }
+      ]
+    },
+    {
+      "name": "adm2_name",
+      "type": "VARCHAR",
+      "null_count": 1,
+      "null_percent": 0.01,
+      "distinct_count": 77,
+      "top_values": [
+        {
+          "value": "Kathmandu",
+          "count": 1292
+        },
+        {
+          "value": "Kaski",
+          "count": 652
+        },
+        {
+          "value": "Banke",
+          "count": 409
+        },
+        {
+          "value": "Rupandehi",
+          "count": 276
+        },
+        {
+          "value": "Lalitpur",
+          "count": 249
+        }
+      ]
+    },
+    {
+      "name": "adm3_pcode",
+      "type": "VARCHAR",
+      "null_count": 1,
+      "null_percent": 0.01,
+      "distinct_count": 499,
+      "top_values": [
+        {
+          "value": "NP0327101",
+          "count": 868
+        },
+        {
+          "value": "NP0439101",
+          "count": 603
+        },
+        {
+          "value": "NP0557201",
+          "count": 216
+        },
+        {
+          "value": "NP0325101",
+          "count": 202
+        },
+        {
+          "value": "NP0327302",
+          "count": 167
+        }
+      ]
+    },
+    {
+      "name": "adm3_name",
+      "type": "VARCHAR",
+      "null_count": 1,
+      "null_percent": 0.01,
+      "distinct_count": 480,
+      "top_values": [
+        {
+          "value": "Kathmandu",
+          "count": 868
+        },
+        {
+          "value": "Pokhara",
+          "count": 603
+        },
+        {
+          "value": "Nepalganj",
+          "count": 216
+        },
+        {
+          "value": "Lalitpur",
+          "count": 202
+        },
+        {
+          "value": "Tokha",
+          "count": 167
+        }
+      ]
+    },
+    {
+      "name": "adm4_pcode",
+      "type": "VARCHAR",
+      "null_count": 7267,
+      "null_percent": 100.0,
+      "distinct_count": 0,
+      "top_values": []
+    },
+    {
+      "name": "adm4_name",
+      "type": "VARCHAR",
+      "null_count": 7267,
+      "null_percent": 100.0,
+      "distinct_count": 0,
+      "top_values": []
+    },
+    {
+      "name": "name_latin",
+      "type": "VARCHAR",
+      "null_count": 384,
+      "null_percent": 5.28,
+      "distinct_count": 6356,
+      "top_values": []
+    }
+  ],
+  "summary": "7,267 features. geometry types: 6,465 POINT, 799 POLYGON, 2 MULTIPOLYGON, 1 LINESTRING. 10 of 22 columns are >=50% null (name_en, name_ne, healthcare, operator, phone, website, addr_full, addr_city, adm4_pcode, adm4_name)."
+}
