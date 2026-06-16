@@ -2,367 +2,443 @@
 {% load static %}
 {% block body %}
 <style>
-    .search-container {
-        padding: 20px 15px;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        box-sizing: border-box;
-    }
+  .search-container {
+    padding: 20px 15px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
-    .search-title {
-        color: #1A3C34;
-        margin: 0 0 25px 0;
-        font-size: clamp(1.5rem, 4vw, 2.2rem);
-        font-weight: 700;
-        text-align: center;
-        letter-spacing: 0.5px;
-        padding: 0 10px;
-    }
+  .search-title {
+    color: #1a3c34;
+    margin: 0 0 20px 0;
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.5px;
+    padding: 0 10px;
+  }
 
-    .search-table {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
-        padding: clamp(15px, 3vw, 32px);
-        margin: 0 auto;
-        width: 100%;
-        max-width: 1200px;
-        overflow-x: auto;
-    }
+  .search-table {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: clamp(15px, 3vw, 28px);
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1300px;
+    overflow-x: auto;
+  }
 
-    table.display {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        font-size: clamp(0.9rem, 2vw, 1.05rem);
-        background: white;
-    }
+  /* Toolbar: search inputs */
+  .doc-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 
-    table.display thead th,
-    table.dataTable thead th,
-    table.dataTable thead th.sorting,
-    table.dataTable thead th.sorting_asc,
-    table.dataTable thead th.sorting_desc {
-        background: linear-gradient(90deg, #00C4B4, #1A3C34) !important;
-        color: white !important;
-        font-weight: 600;
-        border: none;
-        padding: clamp(10px, 2vw, 14px) clamp(6px, 1vw, 8px);
-        font-size: clamp(0.9rem, 2vw, 1.08rem);
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-    }
+  .doc-toolbar-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 
-    table.display tbody td {
-        padding: clamp(8px, 2vw, 12px) clamp(6px, 1vw, 8px);
-        border-bottom: 1.5px solid #f0f0f0;
-        color: #1A3C34;
-        vertical-align: middle;
-    }
+  .doc-toolbar-filters input,
+  .doc-toolbar-filters select {
+    padding: 10px 14px;
+    border: 1px solid #e2e6ea;
+    border-radius: 10px;
+    background: #f8f9fa;
+    font-size: 0.85rem;
+    color: #1a3c34;
+    width: 170px;
+    flex: 0 0 auto;
+    outline: none;
+    transition: border-color 0.2s;
+  }
 
-    .btn-info {
-        background: linear-gradient(90deg, #00C4B4, #1A3C34);
-        border: none;
-        color: white;
-        font-weight: 600;
-        border-radius: 6px;
-        padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 18px);
-        font-size: clamp(0.85rem, 1.5vw, 1em);
-        box-shadow: 0 2px 8px rgba(0, 196, 180, 0.10);
-        transition: all 0.3s;
-        margin: 2px;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        white-space: nowrap;
-    }
+  .doc-toolbar-filters input:focus,
+  .doc-toolbar-filters select:focus {
+    border-color: #00c4b4;
+    background: white;
+  }
 
-    .btn-info:hover,
-    .btn-info:focus {
-        background: #00C4B4;
-        color: #fff;
-        box-shadow: 0 6px 18px rgba(0, 196, 180, 0.15);
-        outline: none;
-        text-decoration: none;
-    }
+  /* Table */
+  table.display {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    font-size: clamp(0.85rem, 1.6vw, 0.95rem);
+    background: transparent;
+  }
 
-    .btn-danger {
-        background: #dc3545;
-        border: none;
-        color: white;
-        font-weight: 600;
-        border-radius: 6px;
-        padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 18px);
-        font-size: clamp(0.85rem, 1.5vw, 1em);
-        margin: 2px;
-        transition: all 0.3s;
-        white-space: nowrap;
-    }
+  table.display thead th {
+    background: #eef1f4 !important;
+    color: #495057 !important;
+    font-weight: 700;
+    border: none;
+    padding: 14px 12px;
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    text-align: center;
+  }
 
-    .btn-danger:hover,
-    .btn-danger:focus {
-        background: #c82333;
-        color: #fff;
-        outline: none;
-    }
+  table.display thead th:first-child {
+    border-radius: 10px 0 0 10px;
+  }
 
-    .healthy {
-        color: #00C4B4;
-        font-weight: 600;
-        margin: 0;
-        font-size: clamp(0.9rem, 2vw, 1em);
-    }
+  table.display thead th:last-child {
+    border-radius: 0 10px 10px 0;
+  }
 
-    .unhealthy {
-        color: #dc3545;
-        font-weight: 600;
-        margin: 0;
-        font-size: clamp(0.9rem, 2vw, 1em);
-    }
+  table.display tbody tr,
+  table.display tbody tr.odd,
+  table.display tbody tr.even {
+    background-color: #f8f9fa !important;
+    box-shadow: none;
+    transition: background-color 0.2s;
+  }
 
-    .dataTables_filter {
-        margin-bottom: 15px;
-    }
+  table.display tbody tr:hover,
+  table.display tbody tr.odd:hover,
+  table.display tbody tr.even:hover {
+    background-color: #e9ecf1 !important;
+  }
 
-    .dataTables_filter input {
-        width: 100%;
-        max-width: 300px;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-    }
+  table.display tbody td {
+    background-color: transparent !important;
+  }
 
+  table.dataTable.no-footer {
+    border-bottom: none !important;
+  }
+
+  table.display tbody td {
+    padding: 14px 12px;
+    border: none;
+    color: #1a3c34;
+    vertical-align: middle;
+    text-align: center;
+  }
+
+  table.display tbody td:first-child {
+    border-radius: 10px 0 0 10px;
+    color: #6c757d;
+    font-weight: 600;
+  }
+
+  table.display tbody td:last-child {
+    border-radius: 0 10px 10px 0;
+    text-align: center !important;
+  }
+
+  table.display tbody tr.no-records-row,
+  table.display tbody tr.no-records-row:hover {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  table.display tbody td.dataTables_empty {
+    width: 100%;
+    border-radius: 10px !important;
+    background-color: transparent !important;
+    color: #6c757d;
+    font-weight: 500;
+    text-align: center !important;
+    white-space: nowrap;
+    padding: 30px 12px !important;
+  }
+
+  .patient-name-cell {
+    font-weight: 700;
+    color: #00897b;
+  }
+
+  /* Result pill */
+  .status-pill {
+    display: inline-block;
+    padding: 7px 18px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: white;
+  }
+
+  .status-pill.healthy {
+    background: #00897b;
+  }
+
+  .status-pill.unhealthy {
+    background: #dc3545;
+  }
+
+  /* Icon action buttons */
+  .action-buttons {
+    white-space: nowrap;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid #e2e6ea;
+    background: white;
+    color: #495057;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .icon-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  }
+
+  .icon-btn.history:hover {
+    color: #00897b;
+    border-color: #00897b;
+  }
+
+  .icon-btn.delete:hover {
+    color: #dc3545;
+    border-color: #dc3545;
+  }
+
+  .no-data {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+    font-size: clamp(14px, 2vw, 16px);
+  }
+
+  /* DataTables overrides — hide defaults, restyle pagination */
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_info {
+    display: none !important;
+  }
+
+  .dataTables_wrapper {
+    border-top: none !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    padding: 0;
+    border-top: none !important;
+    float: none !important;
+    width: 100%;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    min-width: 38px !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 14px !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e6ea !important;
+    background: white !important;
+    color: #1a3c34 !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+    background: #f1f3f5 !important;
+    border-color: #f1f3f5 !important;
+    color: #868e96 !important;
+    font-weight: 400 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #2f80ed !important;
+    border-color: #2f80ed !important;
+    color: white !important;
+    font-weight: 700 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #eef1f4 !important;
+    color: #1a3c34 !important;
+    border-color: #e2e6ea !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous:hover,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next:hover {
+    background: #e2e6ea !important;
+    color: #495057 !important;
+    border-color: #e2e6ea !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: #2f80ed !important;
+    color: white !important;
+    border-color: #2f80ed !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.4 !important;
+    cursor: default !important;
+  }
+
+  @media (max-width: 768px) {
+    .doc-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .doc-toolbar-filters input,
+    .doc-toolbar-filters select {
+      width: 100%;
+    }
     .action-buttons {
-        white-space: nowrap;
-        display: flex;
-        gap: 5px;
-        flex-wrap: wrap;
-        justify-content: center;
+      flex-wrap: wrap;
     }
-
-    .no-data {
-        text-align: center;
-        padding: 20px;
-        color: #6c757d;
-        font-size: clamp(14px, 2vw, 16px);
-    }
-
-    .dt-buttons .btn {
-        background: #00C4B4;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-weight: 500;
-        margin-right: 8px;
-        padding: clamp(5px, 1.2vw, 7px) clamp(10px, 2vw, 16px);
-        font-size: clamp(0.8em, 1.5vw, 0.98em);
-        transition: background 0.3s;
-        white-space: nowrap;
-    }
-
-    .dt-buttons .btn:hover {
-        background: #1A3C34;
-        color: white;
-    }
-
-    /* Responsive breakpoints */
-    @media (max-width: 1200px) {
-        .search-table {
-            margin: 0 15px;
-        }
-    }
-
-    @media (max-width: 992px) {
-        .search-container {
-            padding: 15px 10px;
-        }
-
-        table.display thead th,
-        table.display tbody td {
-            padding: 8px 6px;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .search-table {
-            padding: 15px 10px;
-            border-radius: 10px;
-        }
-
-        .dataTables_wrapper {
-            overflow-x: auto;
-        }
-
-        .action-buttons {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .btn-info,
-        .btn-danger {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .search-container {
-            padding: 10px 5px;
-        }
-
-        .search-title {
-            margin-bottom: 15px;
-        }
-
-        .search-table {
-            padding: 10px 5px;
-        }
-
-        table.display thead th,
-        table.display tbody td {
-            padding: 6px 4px;
-            font-size: 0.9rem;
-        }
-    }
-
-    /* DataTables responsive styles */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter {
-        text-align: left;
-        margin-bottom: 10px;
-    }
-
-    @media screen and (max-width: 767px) {
-
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter {
-            text-align: center;
-        }
-
-        .dataTables_wrapper .dataTables_info,
-        .dataTables_wrapper .dataTables_paginate {
-            text-align: center;
-            margin-top: 10px;
-        }
-    }
+  }
 </style>
 
 <div class="search-container">
-    <h1 class="search-title">Prediction History</h1>
-    <div class="search-table">
-        <table id="example" class="display" style="width:100%">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Date</th>
-                    {% if is_doctor_or_staff %}
-                    <th>Patient Name</th>
-                    <th>Patient Contact</th>
-                    {% endif %}
-                    
-                    <th>Result</th>
-                    <!-- <th>Heart Values</th> -->
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for i in data %}
-                <tr>
-                    <td>{{forloop.counter}}</td>
-                    <td>{{i.created|date:"M d, Y H:i"}}</td>
-                    {% if is_doctor_or_staff %}
-                    <td>
-                        {% if i.patient %}
-                        {{i.patient.user.first_name}} {{i.patient.user.last_name}}
-                        {% else %}
-                        {{ i.patient_name_from_values|default:"N/A" }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if i.patient %}
-                        {{i.patient.contact}}
-                        {% else %}
-                        {{ i.patient_contact_from_values|default:"N/A" }}
-                        {% endif %}
-                    </td>
-                    {% endif %}
-                    
-                    <td>
-                        {% if i.patient %}
-                        {% if i.result == "0" %}
-                        <h5 class="healthy">Healthy</h5>
-                        {% else %}
-                        <h5 class="unhealthy">Unhealthy</h5>
-                        {% endif %}
-                        {% else %}
-                        {% if i.result == "0" %}
-                        <h5 class="unhealthy">Unhealthy</h5>
-                        {% else %}
-                        <h5 class="healthy">Healthy</h5>
-                        {% endif %}
-                        {% endif %}
-                    </td>
-                    <!-- <td>
-                        {% if i.parsed_values.features %}
-                            Age: {{ i.parsed_values.features.age|default_if_none:"N/A" }}<br>
-                            Gender: {{ i.parsed_values.features.sex|default_if_none:"N/A" }}<br>
-                            CP: {{ i.parsed_values.features.cp|default_if_none:"N/A" }}<br>
-                            Trestbps: {{ i.parsed_values.features.trestbps|default_if_none:"N/A" }}<br>
-                            Chol: {{ i.parsed_values.features.chol|default_if_none:"N/A" }}<br>
-                            FBS: {{ i.parsed_values.features.fbs|default_if_none:"N/A" }}<br>
-                            Restecg: {{ i.parsed_values.features.restecg|default_if_none:"N/A" }}<br>
-                            Thalach: {{ i.parsed_values.features.thalach|default_if_none:"N/A" }}<br>
-                            Exang: {{ i.parsed_values.features.exang|default_if_none:"N/A" }}<br>
-                            Oldpeak: {{ i.parsed_values.features.oldpeak|default_if_none:"N/A" }}<br>
-                            Slope: {{ i.parsed_values.features.slope|default_if_none:"N/A" }}<br>
-                            CA: {{ i.parsed_values.features.ca|default_if_none:"N/A" }}<br>
-                            Thal: {{ i.parsed_values.features.thal|default_if_none:"N/A" }}<br>
-                        {% else %}
-                            {{i.values_list}}
-                        {% endif %}
-                    </td> -->
-                    <td class="action-buttons">
-                        <a href="{% url 'view_prediction_history' i.id %}" class="btn btn-info btn-sm">
-                            <i class="fa fa-history"></i> History
-                        </a>
-                        {% if request.user.is_staff %}
-                        <a href="{% url 'delete_searched' i.id %}" class="btn btn-danger btn-sm"
-                            onclick="return confirm('Are you sure?')">
-                            <i class="fa fa-trash"></i> Delete
-                        </a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="{% if is_doctor_or_staff %}7{% else %}5{% endif %}" class="no-data">
-                        No predictions found. Make a prediction to see the history.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+  <h1 class="search-title">Prediction History</h1>
+  <div class="search-table">
+    <div class="doc-toolbar">
+      <div class="doc-toolbar-filters">
+        {% if is_doctor_or_staff %}
+        <input type="text" id="filter-name" placeholder="Search by Name" />
+        {% endif %}
+        <select id="filter-result">
+          <option value="">Filter by Result</option>
+          <option value="Healthy">Healthy</option>
+          <option value="Unhealthy">Unhealthy</option>
+        </select>
+      </div>
     </div>
+
+    <table id="example" class="display" style="width: 100%">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date</th>
+          {% if is_doctor_or_staff %}
+          <th>Patient Name</th>
+          <th>Patient Contact</th>
+          {% endif %}
+          <th>Result</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in data %}
+        <tr>
+          <td>{{forloop.counter}}</td>
+          <td>{{i.created|date:"M d, Y H:i"}}</td>
+          {% if is_doctor_or_staff %}
+          <td>
+            <span class="patient-name-cell">
+              {% if i.patient %}{{i.patient.user.first_name}} {{i.patient.user.last_name}}{% else %}{{ i.patient_name_from_values|default:"N/A" }}{% endif %}
+            </span>
+          </td>
+          <td>
+            {% if i.patient %}{{i.patient.contact}}{% else %}{{ i.patient_contact_from_values|default:"N/A" }}{% endif %}
+          </td>
+          {% endif %}
+          <td>
+            {% if i.patient %}
+            {% if i.result == "0" %}
+            <span class="status-pill healthy">Healthy</span>
+            {% else %}
+            <span class="status-pill unhealthy">Unhealthy</span>
+            {% endif %}
+            {% else %}
+            {% if i.result == "0" %}
+            <span class="status-pill unhealthy">Unhealthy</span>
+            {% else %}
+            <span class="status-pill healthy">Healthy</span>
+            {% endif %}
+            {% endif %}
+          </td>
+          <td class="action-buttons">
+            <a href="{% url 'view_prediction_history' i.id %}" class="icon-btn history" title="View history">
+              <i class="fa fa-history"></i>
+            </a>
+            {% if request.user.is_staff %}
+            <a href="{% url 'delete_searched' i.id %}" class="icon-btn delete" title="Delete"
+               onclick="return confirm('Are you sure?');">
+              <i class="fa fa-trash-o"></i>
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <script>
-    $(document).ready(function () {
-        $('#example').DataTable({
-            responsive: true,
-            destroy: true,
-            "language": {
-                "search": "Search:",
-                "lengthMenu": "Show _MENU_ entries per page",
-                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-                "infoEmpty": "No entries to show",
-                "infoFiltered": "(filtered from _MAX_ total entries)"
-            },
-            "pageLength": 10,
-            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]]
-        });
+  $(document).ready(function () {
+    var nameColIndex = {% if is_doctor_or_staff %}2{% else %}-1{% endif %};
+    var resultColIndex = {% if is_doctor_or_staff %}4{% else %}2{% endif %};
+
+    var table = $("#example").DataTable({
+      destroy: true,
+      dom: "rtp",
+      pagingType: "simple_numbers",
+      pageLength: 10,
+      language: {
+        emptyTable: "No predictions found. Make a prediction to see the history.",
+        zeroRecords: "No matching records found",
+        paginate: {
+          previous: '<i class="fa fa-chevron-left"></i>',
+          next: '<i class="fa fa-chevron-right"></i>',
+        },
+      },
+      drawCallback: function () {
+        var pageInfo = this.api().page.info();
+        $(this)
+          .closest(".dataTables_wrapper")
+          .find(".dataTables_paginate")
+          .toggle(pageInfo.pages > 1);
+        $(this).find("tbody tr").has("td.dataTables_empty")
+          .addClass("no-records-row");
+      },
     });
+
+    if (nameColIndex >= 0) {
+      $("#filter-name").on("keyup", function () {
+        table.column(nameColIndex).search(this.value).draw();
+      });
+    }
+
+    $("#filter-result").on("change", function () {
+      var value = this.value ? "^" + this.value + "$" : "";
+      table.column(resultColIndex).search(value, true, false).draw();
+    });
+  });
 </script>
 {% endblock %}
