@@ -39,7 +39,7 @@ class Search_Data(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, null=True, blank=True)
     prediction_accuracy = models.CharField(max_length=100,null=True,blank=True)
     result = models.CharField(max_length=100,null=True,blank=True)
-    values_list = models.CharField(max_length=100,null=True,blank=True)
+    values_list = models.TextField(null=True, blank=True)
     feature_impacts = models.TextField(null=True, blank=True)
     created = models.DateTimeField(auto_now=True,null=True)
 
@@ -66,7 +66,7 @@ class PredictionHistory(models.Model):
     search_data = models.ForeignKey(Search_Data, on_delete=models.CASCADE)
     prediction_accuracy = models.CharField(max_length=100, null=True, blank=True)
     result = models.CharField(max_length=100, null=True, blank=True)
-    values_list = models.CharField(max_length=100, null=True, blank=True)
+    values_list = models.TextField(null=True, blank=True)
     feature_impacts = models.TextField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

@@ -2,173 +2,329 @@
 {% load static %}
 {% block body %}
 <style>
-    .prediction-container {
-        padding: 30px;
-        max-width: 1200px;
+    /* ── Page Layout ──────────────────────────────────────────────── */
+    .pred-page {
+        max-width: 820px;
         margin: 0 auto;
+        padding: 36px 20px 60px;
     }
-    .prediction-header {
+    .pred-page-title {
         text-align: center;
-        margin-bottom: 30px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #888;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 24px;
     }
-    /* .prediction-result {
+
+    /* ── Result Card ──────────────────────────────────────────────── */
+    .result-card {
         background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 30px;
+        border-radius: 24px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.09);
+        padding: 44px 30px 36px;
         text-align: center;
-
-        max-width: 400px; 
-        margin: 0 auto;    
-    } */
-    
-    .prediction-result {
-        background: linear-gradient(145deg, #ffffff, #f0f0f0);
-        padding: 25px 40px;
-        border-radius: 15px;
-        box-shadow: 0 8px 20px rgba(0, 128, 0, 0.15);
-        margin: 30px auto;
-        max-width: 300px;
-        text-align: center;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        margin-bottom: 28px;
+        position: relative;
+        overflow: hidden;
+        animation: fadeUp 0.6s ease both;
     }
-
-    .prediction-result:hover {
-        transform: scale(1.05);
-        box-shadow: 0 10px 25px rgba(0, 128, 0, 0.25);
+    .result-card::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 5px;
+        border-radius: 24px 24px 0 0;
     }
+    .result-card.card-healthy::after  { background: linear-gradient(90deg, #00C4B4, #28a745); }
+    .result-card.card-unhealthy::after { background: linear-gradient(90deg, #ff6b6b, #dc3545); }
 
-    .prediction-result h2 {
-        color: #28a745;
-        font-weight: 700;
-        font-size: 1.6rem;
-        letter-spacing: 1px;
+    .result-icon { font-size: 3.6rem; margin-bottom: 10px; display: block; }
+    .result-card.card-unhealthy .result-icon { animation: heartbeat 1.4s ease-in-out infinite; }
+
+    @keyframes heartbeat {
+        0%,100% { transform: scale(1); }
+        14%      { transform: scale(1.18); }
+        28%      { transform: scale(1); }
+        42%      { transform: scale(1.10); }
     }
     @keyframes fadeUp {
-        0% {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity:0; transform:translateY(18px); }
+        to   { opacity:1; transform:translateY(0); }
     }
 
-    .prediction-result {
-        animation: fadeUp 0.8s ease-in-out;
+    .result-label {
+        font-size: 2.4rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
     }
+    .result-label.healthy   { color: #28a745; }
+    .result-label.unhealthy { color: #dc3545; }
+    .result-sub { color: #aaa; font-size: 0.9rem; margin-bottom: 16px; }
 
-    .result {
-        font-size: 24px;
-        font-weight: bold;
-        /* margin-bottom: 20px; */
-    }
-    .healthy {
-        color: #28a745;
-    }
-    .unhealthy {
+    .confidence-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fff0f0;
         color: #dc3545;
+        font-weight: 700;
+        padding: 7px 22px;
+        border-radius: 50px;
+        font-size: 0.92rem;
+        border: 1.5px solid #f5c6cb;
+        margin-top: 4px;
     }
-    .doctors-section {
-        margin-top: 30px;
-    }
-    .doctors-table {
-        width: 100%;
-        border-collapse: collapse;
-        background: white;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .doctors-table th {
-        background: #37A2B7;
-        color: white;
-        padding: 12px;
-        text-align: left;
-    }
-    .doctors-table td {
-        padding: 12px;
-        border-bottom: 1px solid #ddd;
-    }
-    .doctors-table tr:last-child td {
-        border-bottom: none;
-    }
-    .doctor-image {
-        width: 80px;
-        height: 90px;
-        object-fit: cover;
-        border-radius: 5px;
+    .confidence-pill.pill-healthy {
+        background: #f0fff4;
+        color: #28a745;
+        border-color: #b8e994;
     }
     .action-button {
         display: inline-block;
-        padding: 10px 20px;
-        background-color: #37A2B7;
-        color: white;
-        text-decoration: none;
-        border-radius: 5px;
         margin-top: 20px;
-    }
-    .action-button:hover {
-        background-color: #2C8898;
+        padding: 10px 24px;
+        background: linear-gradient(90deg, #00C4B4, #1A3C34);
         color: white;
+        border-radius: 8px;
         text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: opacity 0.2s;
     }
+    .action-button:hover { opacity: 0.85; color: white; text-decoration: none; }
 
-    /* New styling for the feature impact section */
-    .feature-impact-container {
-        max-width: 800px;
-        margin: 40px auto;
+    /* ── Factor Impact Card ───────────────────────────────────────── */
+    .impact-card {
         background: white;
-        border-radius: 20px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.10);
-        padding: 30px;
-        text-align: center;
+        border-radius: 24px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+        padding: 32px 28px;
+        margin-bottom: 28px;
+        animation: fadeUp 0.7s ease both;
     }
-    .feature-impact-title {
-        font-size: 1.8em;
+    .card-section-title {
+        font-size: 1.2rem;
         font-weight: 700;
         color: #1A3C34;
-        margin-bottom: 20px;
+        margin-bottom: 22px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
-    .impact-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
+    .card-section-title span.title-icon {
+        width: 36px; height: 36px;
+        background: linear-gradient(135deg, #00C4B4, #1A3C34);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; flex-shrink: 0;
     }
-    .impact-table th, .impact-table td {
-        border: 1px solid #ddd;
-        padding: 10px;
+
+    .impact-grid { width: 100%; border-collapse: collapse; }
+    .impact-grid thead tr {
+        border-bottom: 2px solid #f0f0f0;
+    }
+    .impact-grid th {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #aaa;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 0 12px 12px;
         text-align: left;
     }
-    .impact-table th {
-        background-color: #f2f2f2;
-        font-weight: 600;
-        color: #00C4B4;
+    .impact-grid th:nth-child(2) { text-align: center; }
+    .impact-grid td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #f7f7f7;
+        vertical-align: middle;
     }
-    .impact-positive { color: #dc3545; font-weight: bold; } /* Red for higher risk */
-    .impact-negative { color: #28a745; font-weight: bold; } /* Green for lower risk */
-    .impact-neutral { color: #6c757d; } /* Gray for neutral */
+    .impact-grid tr:last-child td { border-bottom: none; }
+    .impact-grid tr:hover td { background: #fafafa; }
+
+    .factor-name { font-weight: 500; color: #333; font-size: 0.93rem; }
+    .factor-value {
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.88rem;
+        background: #f4f8f8;
+        color: #1A3C34;
+        border-radius: 8px;
+        padding: 4px 10px;
+        display: inline-block;
+        min-width: 48px;
+    }
+
+    /* impact bar */
+    .bar-wrap {
+        position: relative;
+        height: 6px;
+        background: #f0f0f0;
+        border-radius: 3px;
+        min-width: 80px;
+    }
+    .bar-center {
+        position: absolute;
+        left: 50%; top: -3px;
+        width: 2px; height: 12px;
+        background: #ddd;
+        border-radius: 1px;
+    }
+    .bar-fill {
+        position: absolute;
+        top: 0; height: 100%;
+        border-radius: 3px;
+        transition: width 0.6s ease;
+    }
+    .bar-fill.pos { left: 50%; background: linear-gradient(90deg, #ff8c8c, #dc3545); }
+    .bar-fill.neg { right: 50%; background: linear-gradient(90deg, #28a745, #a0e4a0); }
+
+    /* impact badge */
+    .impact-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .ib-strong-up   { background:#fde8e8; color:#c0392b; }
+    .ib-mod-up      { background:#fff0f0; color:#e74c3c; }
+    .ib-neutral     { background:#f5f5f5; color:#999; }
+    .ib-mod-down    { background:#edfaf1; color:#27ae60; }
+    .ib-strong-down { background:#d4efdf; color:#1e7e34; }
+
+    /* ── Hospital Section ─────────────────────────────────────────── */
+    .hospital-section {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 8px 40px rgba(220,53,69,0.10);
+        padding: 32px 28px;
+        margin-bottom: 28px;
+        border-top: 5px solid #dc3545;
+        animation: fadeUp 0.8s ease both;
+    }
+    .hospital-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        background: linear-gradient(135deg, #fff8f8, #fff0f0);
+        border: 1px solid #f5c6cb;
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 22px;
+    }
+    .hospital-alert-icon { font-size: 2rem; flex-shrink: 0; line-height: 1.2; }
+    .hospital-alert-text h4 {
+        color: #c0392b; margin: 0 0 4px; font-size: 1rem; font-weight: 700;
+    }
+    .hospital-alert-text p { color: #666; margin: 0; font-size: 0.88rem; line-height: 1.5; }
+
+    .hospital-section-title {
+        font-size: 1.2rem; font-weight: 700; color: #1A3C34;
+        margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+    }
+    .hospital-section-title span.title-icon {
+        width: 36px; height: 36px;
+        background: linear-gradient(135deg, #ff6b6b, #dc3545);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; flex-shrink: 0;
+    }
+
+    #findHospitalsBtn {
+        background: linear-gradient(90deg, #dc3545, #c0392b);
+        color: white; border: none;
+        padding: 13px 28px; border-radius: 12px;
+        font-size: 0.95rem; font-weight: 700;
+        cursor: pointer; display: inline-flex;
+        align-items: center; gap: 8px;
+        transition: opacity 0.2s, transform 0.15s;
+        box-shadow: 0 4px 14px rgba(220,53,69,0.30);
+    }
+    #findHospitalsBtn:hover:not(:disabled) { opacity:0.88; transform:translateY(-2px); }
+    #findHospitalsBtn:disabled { opacity:0.55; cursor:not-allowed; transform:none; }
+
+    #locationStatus { margin-top:10px; font-size:0.85rem; color:#888; display:none; }
+
+    #map {
+        height: 400px; border-radius: 16px;
+        margin-top: 22px; display: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        overflow: hidden;
+    }
+    #hospitalList { display:none; margin-top:22px; }
+
+    .hospital-table { width:100%; border-collapse:collapse; }
+    .hospital-table thead tr { background:#1A3C34; }
+    .hospital-table th {
+        color:white; padding:12px 14px;
+        font-size:0.8rem; font-weight:700;
+        text-transform:uppercase; letter-spacing:0.5px;
+        text-align:left;
+    }
+    .hospital-table td {
+        padding:11px 14px;
+        border-bottom:1px solid #f4f4f4;
+        vertical-align:middle; font-size:0.9rem;
+    }
+    .hospital-table tr:last-child td { border-bottom:none; }
+    .hospital-table tbody tr:hover td { background:#f9fbfb; }
+
+    .hospital-type-badge {
+        display:inline-block; padding:3px 11px;
+        border-radius:20px; font-size:0.75rem; font-weight:700;
+    }
+    .badge-hospital { background:#e3f2fd; color:#1565c0; }
+    .badge-clinic   { background:#e8f5e9; color:#2e7d32; }
+    .dist-badge {
+        background:#fff3e0; color:#e65100;
+        padding:3px 11px; border-radius:20px;
+        font-size:0.82rem; font-weight:700;
+    }
+    .no-hospitals { text-align:center; padding:30px; color:#aaa; font-size:0.9rem; }
+
+    @media (max-width: 600px) {
+        .pred-page { padding: 16px 12px 40px; }
+        .result-label { font-size: 1.8rem; }
+        .impact-card, .result-card, .hospital-section { padding: 22px 16px; border-radius: 16px; }
+        .impact-grid th:nth-child(3) { display: none; }
+        .impact-grid td:nth-child(3) { display: none; }
+    }
 </style>
 
-<div class="prediction-container">
-    <div class="prediction-header">
-        <h2>Heart Disease Prediction Result</h2>
-    </div>
+{% if is_patient and pred_value == 1 and unhealthy_prob_pct >= 70 %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% endif %}
 
-    <div class="prediction-result">
-        <!-- <div class="accuracy">
-            <strong>Accuracy:</strong> {{ accuracy }}%
-        </div> -->
-        <div class="result">
+<div class="pred-page">
+    <div class="pred-page-title">Heart Disease Prediction Result</div>
+
+    <div class="result-card {% if 'unhealthy' in pred or pred == '1' %}card-unhealthy{% else %}card-healthy{% endif %}">
+        <span class="result-icon">{% if 'unhealthy' in pred or pred == '1' %}💔{% else %}💚{% endif %}</span>
+        <div class="result-label {% if 'unhealthy' in pred or pred == '1' %}unhealthy{% else %}healthy{% endif %}">
             {{ pred|safe }}
         </div>
+        <div class="result-sub">Heart Disease Risk Assessment</div>
+
+        {% if unhealthy_prob_pct %}
+            <span class="confidence-pill {% if 'unhealthy' not in pred and pred != '1' %}pill-healthy{% endif %}">
+                {% if 'unhealthy' in pred or pred == '1' %}⚠️{% else %}✓{% endif %} {{ unhealthy_prob_pct }}% Risk Confidence
+            </span>
+        {% elif accuracy %}
+            <span class="confidence-pill {% if 'unhealthy' not in pred and pred != '1' %}pill-healthy{% endif %}">
+                📊 Model Accuracy: {{ accuracy }}%
+            </span>
+        {% endif %}
 
         {% if request.user.doctor_set.all.0 %}
-            <a href="{% url 'view_search_pat' %}" class="action-button">
-                <i class="fa fa-history"></i> View All Predictions
-            </a>
+            <div>
+                <a href="{% url 'view_search_pat' %}" class="action-button">
+                    <i class="fa fa-history"></i> View All Predictions
+                </a>
+            </div>
         {% endif %}
     </div>
 
@@ -211,9 +367,9 @@
 
 
     {% if feature_impacts %}
-    <div class="feature-impact-container">
-        <h3 class="feature-impact-title">How Each Factor Impacts Your Risk</h3>
-        <table class="impact-table">
+    <div class="impact-card">
+        <div class="card-section-title"><span class="title-icon">📊</span> How Each Factor Impacts Your Risk</div>
+        <table class="impact-grid">
             <thead>
                 <tr>
                     <th>Factor</th>
@@ -224,25 +380,19 @@
             <tbody>
                 {% for item in feature_impacts %}
                 <tr>
-                    <td>{{ item.feature }}</td>
-                    <td>{{ item.value|floatformat:"-2" }}</td>
-                    <!-- <td class="
-                        {% if item.normalized_impact > 0.2 %}impact-positive{% elif item.normalized_impact < -0.2 %}impact-negative{% else %}impact-neutral{% endif %}">
-                        {{ item.normalized_impact|floatformat:"-2" }}
-                    </td>
-                    <td>{{ item.relative_importance }}%</td> -->
-                    <td class="
-                        {% if item.impact > 0.1 %}impact-positive{% elif item.impact < -0.1 %}impact-negative{% else %}impact-neutral{% endif %}">
+                    <td class="factor-name">{{ item.feature }}</td>
+                    <td style="text-align:center;"><span class="factor-value">{{ item.value|floatformat:"-2" }}</span></td>
+                    <td>
                         {% if item.impact > 0.3 %}
-                            Strongly Increases Risk
+                            <span class="impact-badge ib-strong-up">⬆ Strongly Increases Risk</span>
                         {% elif item.impact > 0.1 %}
-                            Moderately Increases Risk
+                            <span class="impact-badge ib-mod-up">⬆ Moderately Increases Risk</span>
                         {% elif item.impact < -0.3 %}
-                            Strongly Decreases Risk
+                            <span class="impact-badge ib-strong-down">⬇ Strongly Decreases Risk</span>
                         {% elif item.impact < -0.1 %}
-                            Moderately Decreases Risk
+                            <span class="impact-badge ib-mod-down">⬇ Moderately Decreases Risk</span>
                         {% else %}
-                            Minimal Impact
+                            <span class="impact-badge ib-neutral">• Minimal Impact</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -251,6 +401,246 @@
         </table>
     </div>
     {% endif %}
-    
+
+    {% if is_patient and pred_value == 1 and unhealthy_prob_pct >= 70 %}
+    <!-- ── Nearest Hospital Recommendation ─────────────────────────── -->
+    <div class="hospital-section">
+        <div class="hospital-section-title">
+            🏥 Nearby Hospital Recommendation
+        </div>
+
+        <div class="hospital-alert">
+            <div class="hospital-alert-icon">⚠️</div>
+            <div class="hospital-alert-text">
+                <h4>High Risk Detected — {{ unhealthy_prob_pct }}% chance of heart disease</h4>
+                <p>Your results indicate a high risk of heart disease. We strongly recommend visiting a hospital or cardiologist as soon as possible. Click the button below to find hospitals near your current location.</p>
+            </div>
+        </div>
+
+        <button id="findHospitalsBtn" onclick="findNearestHospitals()">
+            📍 Find Nearest Hospitals
+        </button>
+        <p id="locationStatus"></p>
+
+        <div id="map"></div>
+        <div id="hospitalList"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+    var _map = null;
+    var _markers = [];
+
+    function findNearestHospitals() {
+        var btn = document.getElementById('findHospitalsBtn');
+        var status = document.getElementById('locationStatus');
+
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Detecting your location...';
+        status.style.display = 'block';
+        status.textContent = 'Waiting for location permission...';
+
+        if (!navigator.geolocation) {
+            alert('Your browser does not support location access. Please use a modern browser.');
+            btn.disabled = false;
+            btn.innerHTML = '📍 Find Nearest Hospitals';
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                var lat = pos.coords.latitude;
+                var lng = pos.coords.longitude;
+                status.textContent = 'Location found. Searching for nearby hospitals...';
+                btn.innerHTML = '🔍 Searching...';
+                searchHospitals(lat, lng);
+            },
+            function(err) {
+                btn.disabled = false;
+                btn.innerHTML = '📍 Find Nearest Hospitals';
+                status.style.display = 'none';
+                var msg = {
+                    1: 'Location access was denied. Please allow location permission in your browser and try again.',
+                    2: 'Unable to determine your location. Please check your GPS/network.',
+                    3: 'Location request timed out. Please try again.'
+                };
+                alert(msg[err.code] || 'Location error. Please try again.');
+            },
+            { timeout: 12000, maximumAge: 60000, enableHighAccuracy: true }
+        );
+    }
+
+    function searchHospitals(lat, lng) {
+        fetch('/api/nearby-hospitals/?lat=' + lat + '&lng=' + lng + '&radius=5')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var elements = (data.hospitals || []).map(function(h) {
+                    return { lat: h.lat, lon: h.lon, tags: { name: h.name, amenity: h.type } };
+                });
+                renderResults(lat, lng, elements);
+            })
+            .catch(function() {
+                document.getElementById('findHospitalsBtn').disabled = false;
+                document.getElementById('findHospitalsBtn').innerHTML = '📍 Find Nearest Hospitals';
+                document.getElementById('locationStatus').style.display = 'none';
+                alert('Could not load hospital data. Please try again.');
+            });
+    }
+
+    function haversine(lat1, lng1, lat2, lng2) {
+        var R = 6371;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLng = (lng2 - lng1) * Math.PI / 180;
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2)
+              + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180)
+              * Math.sin(dLng/2) * Math.sin(dLng/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    var _allPlaces = [];
+    var _shownCount = 0;
+    var _userLat = 0, _userLng = 0;
+
+    function renderTable(places, startIndex, count) {
+        var listEl = document.getElementById('hospitalList');
+        var batch = places.slice(startIndex, startIndex + count);
+        if (startIndex === 0) {
+            var total = Math.min(places.length, 20);
+            var html = '<h4 style="margin-bottom:14px;color:#1A3C34;">Found ' + total + ' facilit' + (total === 1 ? 'y' : 'ies') + ' within 5 km</h4>'
+                + '<div style="overflow-x:auto;"><table class="hospital-table"><thead><tr>'
+                + '<th>#</th><th>Name</th><th>Type</th><th>Distance</th>'
+                + '</tr></thead><tbody id="hospitalTableBody">';
+            batch.forEach(function(p, i) {
+                var badge = p.type === 'hospital'
+                    ? '<span class="hospital-type-badge badge-hospital">🏥 Hospital</span>'
+                    : '<span class="hospital-type-badge badge-clinic">🏨 Clinic</span>';
+                var mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(p.name) + '&query_place_id=&center=' + p.lat + ',' + p.lng;
+                html += '<tr><td><b>' + (i+1) + '</b></td><td><a href="' + mapsUrl + '" target="_blank" style="color:#1A3C34;text-decoration:none;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">' + p.name + '</a></td><td>' + badge + '</td>'
+                    + '<td><span class="dist-badge">' + p.dist.toFixed(2) + ' km</span></td></tr>';
+            });
+            html += '</tbody></table></div>';
+            if (places.length > 10) {
+                html += '<button id="showMoreBtn" onclick="showMoreHospitals()" style="margin-top:12px;padding:10px 24px;background:linear-gradient(90deg,#00C4B4,#1A3C34);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Show Next 10 →</button>';
+            }
+            listEl.innerHTML = html;
+            listEl.style.display = 'block';
+        } else {
+            var tbody = document.getElementById('hospitalTableBody');
+            batch.forEach(function(p, i) {
+                var badge = p.type === 'hospital'
+                    ? '<span class="hospital-type-badge badge-hospital">🏥 Hospital</span>'
+                    : '<span class="hospital-type-badge badge-clinic">🏨 Clinic</span>';
+                var mapsUrl2 = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(p.name) + '&center=' + p.lat + ',' + p.lng;
+                var row = document.createElement('tr');
+                row.innerHTML = '<td><b>' + (startIndex+i+1) + '</b></td><td><a href="' + mapsUrl2 + '" target="_blank" style="color:#1A3C34;text-decoration:none;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">' + p.name + '</a></td><td>' + badge + '</td>'
+                    + '<td><span class="dist-badge">' + p.dist.toFixed(2) + ' km</span></td>';
+                tbody.appendChild(row);
+            });
+            // hide button if no more results
+            if (startIndex + count >= places.length) {
+                var btn = document.getElementById('showMoreBtn');
+                if (btn) btn.style.display = 'none';
+            }
+        }
+    }
+
+    function showMoreHospitals() {
+        _shownCount += 10;
+        // Add next 10 map pins
+        var nextBatch = _allPlaces.slice(_shownCount, _shownCount + 10);
+        nextBatch.forEach(function(p, i) {
+            var idx = _shownCount + i;
+            var hospPin = L.divIcon({
+                className: '',
+                html: '<div style="background:#1A3C34;color:white;font-size:13px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);">' + (idx+1) + '</div>',
+                iconAnchor: [15, 15]
+            });
+            var m = L.marker([p.lat, p.lng], { icon: hospPin })
+                .addTo(_map)
+                .bindPopup('<b>' + p.name + '</b><br><span style="color:#888">' + p.dist.toFixed(2) + ' km away</span>');
+            _markers.push(m);
+        });
+        renderTable(_allPlaces, _shownCount, 10);
+    }
+
+    function renderResults(userLat, userLng, elements) {
+        _userLat = userLat; _userLng = userLng;
+        var places = [];
+        elements.forEach(function(el) {
+            var elLat = el.lat !== undefined ? el.lat : (el.center ? el.center.lat : null);
+            var elLng = el.lon !== undefined ? el.lon : (el.center ? el.center.lon : null);
+            if (elLat === null || elLng === null) return;
+            var name = (el.tags && (el.tags['name'] || el.tags['name:en'])) || 'Unnamed Facility';
+            var type = (el.tags && el.tags['amenity']) || 'hospital';
+            var dist = haversine(userLat, userLng, elLat, elLng);
+            places.push({ name: name, type: type, lat: elLat, lng: elLng, dist: dist });
+        });
+        places.sort(function(a, b) { return a.dist - b.dist; });
+        _allPlaces = places.slice(0, 20);
+        _shownCount = 0;
+
+        // ── Map ─────────────────────────────────────────────────────
+        var mapEl = document.getElementById('map');
+        mapEl.style.display = 'block';
+
+        if (!_map) {
+            _map = L.map('map').setView([userLat, userLng], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(_map);
+        } else {
+            _markers.forEach(function(m) { _map.removeLayer(m); });
+            _markers = [];
+            _map.setView([userLat, userLng], 14);
+        }
+
+        // User pin
+        var youPin = L.divIcon({
+            className: '',
+            html: '<div style="width:18px;height:18px;background:#dc3545;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(220,53,69,0.7);"></div>',
+            iconAnchor: [9, 9]
+        });
+        var youMarker = L.marker([userLat, userLng], { icon: youPin })
+            .addTo(_map)
+            .bindPopup('<b>📍 You are here</b>')
+            .openPopup();
+        _markers.push(youMarker);
+
+        // First 10 map pins
+        _allPlaces.slice(0, 10).forEach(function(p, i) {
+            var hospPin = L.divIcon({
+                className: '',
+                html: '<div style="background:#1A3C34;color:white;font-size:13px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);">' + (i+1) + '</div>',
+                iconAnchor: [15, 15]
+            });
+            var m = L.marker([p.lat, p.lng], { icon: hospPin })
+                .addTo(_map)
+                .bindPopup('<b>' + p.name + '</b><br><span style="color:#888">' + p.dist.toFixed(2) + ' km away</span>');
+            _markers.push(m);
+        });
+
+        // 5km search circle
+        var circle = L.circle([userLat, userLng], {
+            radius: 5000, color: '#dc3545', weight: 1,
+            fillColor: '#dc3545', fillOpacity: 0.04
+        }).addTo(_map);
+        _markers.push(circle);
+
+        if (_allPlaces.length === 0) {
+            document.getElementById('hospitalList').innerHTML = '<div class="no-hospitals">No hospitals or clinics found within 5 km of your location.</div>';
+            document.getElementById('hospitalList').style.display = 'block';
+        } else {
+            renderTable(_allPlaces, 0, 10);
+        }
+
+        var btn = document.getElementById('findHospitalsBtn');
+        btn.disabled = false;
+        btn.innerHTML = 'Refresh Location';
+        document.getElementById('locationStatus').style.display = 'none';
+    }
+    </script>
+    {% endif %}
+
 </div>
 {% endblock %}

@@ -1,0 +1,59 @@
+iso3: NPL
+category:
+  name: Hospitals
+  formats: null
+  hdx:
+    title: Hospitals of Nepal
+    notes: Hospitals, clinics, doctor and dentist offices, and pharmacies across Nepal.
+      Sourced from OpenStreetMap and Overture Maps.
+    tags:
+    - health
+    license: CDLA Permissive 2.0
+    license_url: https://cdla.dev/permissive-2-0/
+    caveats: Health POI data may contain errors and is community verified.
+    dataset_source: null
+  overture:
+    enabled: true
+    theme: places
+    feature_type: place
+    select:
+    - id
+    - names.primary AS name
+    - names.common->'en' AS name_en
+    - categories.primary AS category
+    - addresses[1].freeform AS address
+    - phones[1] AS phone
+    - emails[1] AS email
+    - websites[1] AS website
+    - confidence
+    - sources[1].dataset AS source
+    where:
+    - categories.primary IN ('hospital', 'clinic', 'doctor', 'dentist', 'pharmacy')
+  osm:
+    enabled: true
+    select:
+    - feature_id AS id
+    - tags['name'] AS name
+    - tags['name:en'] AS name_en
+    - tags['name:ne'] AS name_ne
+    - tags['amenity'] AS amenity
+    - tags['healthcare'] AS healthcare
+    - tags['operator'] AS operator
+    - tags['phone'] AS phone
+    - tags['website'] AS website
+    - tags['addr:full'] AS addr_full
+    - tags['addr:city'] AS addr_city
+    where: []
+    filter:
+      amenity:
+      - hospital
+      - clinic
+      - doctors
+      - dentist
+      - pharmacy
+      healthcare: true
+  transliterate:
+  - target: name_latin
+    source: name
+    prefer: name_en
+source: osm

@@ -1,5 +1,10 @@
 {
-    "accuracy": 0.70925,
+    "accuracy": 0.8895833333333333,
+    "holdout_accuracy_lr": 0.6888888888888889,
+    "holdout_accuracy_rf": 0.8895833333333333,
+    "best_model_type": "RandomForest",
+    "best_C": 0.5,
+    "cv_accuracy_lr": 0.7042873346848151,
     "feature_names": [
         "Age",
         "Gender",
@@ -23,15 +28,47 @@
     ],
     "confusion_matrix": [
         [
-            1381,
-            618
+            668,
+            69
         ],
         [
-            545,
-            1456
+            90,
+            613
         ]
     ],
-    "classification_report": "              precision    recall  f1-score   support\n\n           0       0.72      0.69      0.70      1999\n           1       0.70      0.73      0.71      2001\n\n    accuracy                           0.71      4000\n   macro avg       0.71      0.71      0.71      4000\nweighted avg       0.71      0.71      0.71      4000\n",
-    "trained_on": "2025-07-29 10:23:05.697123",
-    "model_type": "LogisticRegression"
+    "confusion_matrix_rf": [
+        [
+            668,
+            69
+        ],
+        [
+            90,
+            613
+        ]
+    ],
+    "confusion_matrix_lr": [
+        [
+            495,
+            242
+        ],
+        [
+            206,
+            497
+        ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n           0       0.88      0.91      0.89       737\n           1       0.90      0.87      0.89       703\n\n    accuracy                           0.89      1440\n   macro avg       0.89      0.89      0.89      1440\nweighted avg       0.89      0.89      0.89      1440\n",
+    "classification_report_rf": "              precision    recall  f1-score   support\n\n           0       0.88      0.91      0.89       737\n           1       0.90      0.87      0.89       703\n\n    accuracy                           0.89      1440\n   macro avg       0.89      0.89      0.89      1440\nweighted avg       0.89      0.89      0.89      1440\n",
+    "classification_report_lr": "              precision    recall  f1-score   support\n\n           0       0.71      0.67      0.69       737\n           1       0.67      0.71      0.69       703\n\n    accuracy                           0.69      1440\n   macro avg       0.69      0.69      0.69      1440\nweighted avg       0.69      0.69      0.69      1440\n",
+    "model_version": "v2.0",
+    "trained_on": "2026-06-16 08:03:48.136777",
+    "f1_scores": {
+        "lr_healthy": 0.6884561891515995,
+        "lr_disease": 0.6893203883495146,
+        "lr_macro": 0.688888288750557,
+        "lr_weighted": 0.688878086398915,
+        "rf_healthy": 0.8936454849498328,
+        "rf_disease": 0.8851985559566787,
+        "rf_macro": 0.8894220204532557,
+        "rf_weighted": 0.8895217411427582
+    }
 }

@@ -18,15 +18,43 @@ import seaborn as sns
 sns.set_style('darkgrid')
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV
+from sklearn.pipeline import Pipeline
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
 from django.http import HttpResponse, JsonResponse
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, f1_score
+from sklearn.metrics import (accuracy_score, confusion_matrix, classification_report, f1_score,
+                             roc_curve, auc, precision_recall_curve, average_precision_score, log_loss)
+from sklearn.model_selection import learning_curve
+from sklearn.linear_model import SGDClassifier
 
 from datetime import datetime, date
+
+# Bumped when training recipe or saved metrics schema changes (triggers retrain on load).
+DOCTOR_HEART_MODEL_RECIPE_VERSION = 3
+
+
+def normalize_doctor_heart_cp(value):
+    """Map chest-pain type to media/heart.csv encoding (0–3). Legacy UCI form used 1–4."""
+    v = int(value)
+    if 1 <= v <= 4:
+        return v - 1
+    if 0 <= v <= 3:
+        return v
+    raise ValueError("cp must be 0–3 (dataset) or legacy 1–4 (UCI labels)")
+
+
+def normalize_doctor_heart_slope(value):
+    """Map ST slope to media/heart.csv encoding (0–2). Legacy form used 1–3 (UCI)."""
+    v = int(value)
+    if 1 <= v <= 3:
+        return v - 1
+    if 0 <= v <= 2:
+        return v
+    raise ValueError("slope must be 0–2 (dataset) or legacy 1–3 (UCI labels)")
+
 
 def print_model_metrics(y_test, y_pred, model_name="Model", accuracy=None):
     """
@@ -325,10 +353,12 @@ def Change_Password(request):
             sign = Doctor.objects.get(user=user)
     terror = ""
     if request.method=="POST":
+        o = request.POST['pwd3']
         n = request.POST['pwd1']
         c = request.POST['pwd2']
-        o = request.POST['pwd3']
-        if c == n:
+        if not request.user.check_password(o):
+            terror = "wrong_old"
+        elif c == n:
             u = User.objects.get(username__exact=request.user.username)
             u.set_password(n)
             u.save()
@@ -348,109 +378,381 @@ def preprocess_inputs(df, scaler):
     return X, y
 
 
+def generate_model_plots(prefix, X_train, X_test, y_train, y_test,
+                          lr_model, rf_model, scaler, feature_names, best_C=1.0):
+    """
+    Generates and saves all evaluation plots for both LR and RF models.
+    prefix: 'doctor' or 'patient'
+    Saves PNGs to media/model_plots/ and prints a summary to terminal.
+    Returns dict of {plot_name: file_path}.
+    """
+    plt.switch_backend('Agg')
+    plots_dir = os.path.join('media', 'model_plots')
+    os.makedirs(plots_dir, exist_ok=True)
+
+    X_tr_s = scaler.transform(X_train)
+    X_te_s = scaler.transform(X_test)
+
+    lr_pred  = lr_model.predict(X_te_s)
+    lr_proba = lr_model.predict_proba(X_te_s)[:, 1]
+    rf_pred  = rf_model.predict(X_test)
+    rf_proba = rf_model.predict_proba(X_test)[:, 1]
+
+    saved = {}
+    title_prefix = prefix.title()
+
+    def _save(fig, name):
+        p = os.path.join(plots_dir, f'{prefix}_{name}.png')
+        fig.savefig(p, dpi=120, bbox_inches='tight')
+        plt.close(fig)
+        saved[name] = p
+        print(f"  [plot] {p}")
+
+    # ── 1. Confusion Matrices ──────────────────────────────────────────────
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    fig.suptitle(f'{title_prefix} Model — Confusion Matrices', fontsize=13, fontweight='bold')
+    for ax, pred, title in [(axes[0], lr_pred, 'Logistic Regression'),
+                             (axes[1], rf_pred, 'Random Forest')]:
+        cm_vals = confusion_matrix(y_test, pred)
+        sns.heatmap(cm_vals, annot=True, fmt='d', cmap='Blues', ax=ax,
+                    xticklabels=['Healthy', 'Disease'],
+                    yticklabels=['Healthy', 'Disease'], linewidths=0.5)
+        ax.set(title=title, xlabel='Predicted', ylabel='Actual')
+    plt.tight_layout()
+    _save(fig, 'confusion_matrix')
+
+    # ── 2. ROC Curve (Prediction Curve) ───────────────────────────────────
+    fig, ax = plt.subplots(figsize=(7, 6))
+    for proba, label, color in [(lr_proba, 'Logistic Regression', '#e74c3c'),
+                                  (rf_proba, 'Random Forest', '#2e86de')]:
+        fpr, tpr, _ = roc_curve(y_test, proba)
+        ax.plot(fpr, tpr, color=color, lw=2, label=f'{label} (AUC={auc(fpr, tpr):.3f})')
+    ax.plot([0, 1], [0, 1], 'k--', lw=1, label='Random classifier')
+    ax.set(xlabel='False Positive Rate', ylabel='True Positive Rate',
+           title=f'{title_prefix} Model — ROC / Prediction Curve')
+    ax.legend(loc='lower right')
+    ax.grid(alpha=0.3)
+    _save(fig, 'roc_curve')
+
+    # ── 3. Precision-Recall Curve ──────────────────────────────────────────
+    fig, ax = plt.subplots(figsize=(7, 6))
+    for proba, label, color in [(lr_proba, 'Logistic Regression', '#e74c3c'),
+                                  (rf_proba, 'Random Forest', '#2e86de')]:
+        prec, rec, _ = precision_recall_curve(y_test, proba)
+        ap = average_precision_score(y_test, proba)
+        ax.plot(rec, prec, color=color, lw=2, label=f'{label} (AP={ap:.3f})')
+    ax.set(xlabel='Recall', ylabel='Precision',
+           title=f'{title_prefix} Model — Precision-Recall Curve')
+    ax.legend(loc='upper right')
+    ax.grid(alpha=0.3)
+    _save(fig, 'pr_curve')
+
+    # ── 4. Learning / Validation Curves ───────────────────────────────────
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    fig.suptitle(f'{title_prefix} Model — Learning / Validation Curves', fontsize=13, fontweight='bold')
+    lr_pipe_lc = Pipeline([
+        ('scaler', StandardScaler()),
+        ('clf', LogisticRegression(C=best_C, class_weight='balanced',
+                                   max_iter=4000, random_state=42, solver='lbfgs'))
+    ])
+    rf_lc = RandomForestClassifier(n_estimators=100, max_depth=12, min_samples_leaf=2,
+                                    class_weight='balanced', random_state=42, n_jobs=1)
+    for ax, estimator, X_data, label in [
+        (axes[0], lr_pipe_lc, X_train, 'Logistic Regression'),
+        (axes[1], rf_lc,      X_train, 'Random Forest'),
+    ]:
+        try:
+            tr_sz, tr_sc, cv_sc = learning_curve(
+                estimator, X_data, y_train, cv=5, scoring='accuracy',
+                train_sizes=np.linspace(0.1, 1.0, 10), random_state=42, n_jobs=1
+            )
+            tr_m, tr_s = tr_sc.mean(1), tr_sc.std(1)
+            cv_m, cv_s = cv_sc.mean(1), cv_sc.std(1)
+            ax.plot(tr_sz, tr_m, 'o-', color='#e74c3c', label='Training accuracy')
+            ax.fill_between(tr_sz, tr_m - tr_s, tr_m + tr_s, alpha=0.15, color='#e74c3c')
+            ax.plot(tr_sz, cv_m, 'o-', color='#2e86de', label='CV accuracy')
+            ax.fill_between(tr_sz, cv_m - cv_s, cv_m + cv_s, alpha=0.15, color='#2e86de')
+            ax.set_ylim(0.4, 1.05)
+        except Exception as e:
+            ax.text(0.5, 0.5, str(e), ha='center', va='center', transform=ax.transAxes, fontsize=8)
+        ax.set(xlabel='Training samples', ylabel='Accuracy', title=label)
+        ax.legend()
+        ax.grid(alpha=0.3)
+    plt.tight_layout()
+    _save(fig, 'learning_curve')
+
+    # ── 5. LR Loss Curve (epoch-by-epoch via SGD) ─────────────────────────
+    fig, ax = plt.subplots(figsize=(8, 5))
+    try:
+        sgd_clf = SGDClassifier(loss='log_loss', random_state=42,
+                                 class_weight='balanced', tol=None, max_iter=1)
+        tr_losses, vl_losses = [], []
+        for _ in range(100):
+            sgd_clf.partial_fit(X_tr_s, y_train, classes=np.unique(y_train))
+            tr_losses.append(log_loss(y_train, sgd_clf.predict_proba(X_tr_s)))
+            vl_losses.append(log_loss(y_test,  sgd_clf.predict_proba(X_te_s)))
+        ax.plot(range(1, 101), tr_losses, color='#e74c3c', lw=2, label='Training loss')
+        ax.plot(range(1, 101), vl_losses, color='#2e86de', lw=2, label='Validation loss')
+        ax.set(xlabel='Epoch', ylabel='Log Loss',
+               title=f'{title_prefix} Model — Logistic Regression Loss Curve (SGD)')
+        ax.legend()
+        ax.grid(alpha=0.3)
+    except Exception as e:
+        ax.text(0.5, 0.5, f'Loss curve error:\n{e}', ha='center', va='center',
+                transform=ax.transAxes, fontsize=9)
+    _save(fig, 'lr_loss_curve')
+
+    # ── 6. RF OOB Error Curve (equivalent of loss/epoch for RF) ───────────
+    fig, ax = plt.subplots(figsize=(8, 5))
+    try:
+        n_range = list(range(10, 310, 10))
+        rf_oob = RandomForestClassifier(max_depth=12, min_samples_leaf=2,
+                                         class_weight='balanced', random_state=42,
+                                         n_jobs=1, oob_score=True, warm_start=True,
+                                         n_estimators=10)
+        oob_errors = []
+        for n in n_range:
+            rf_oob.set_params(n_estimators=n)
+            rf_oob.fit(X_train, y_train)
+            oob_errors.append(1 - rf_oob.oob_score_)
+        ax.plot(n_range, oob_errors, color='#2e86de', lw=2, marker='o', markersize=4)
+        min_idx = int(np.argmin(oob_errors))
+        ax.axvline(n_range[min_idx], color='#e74c3c', ls='--', lw=1.5,
+                   label=f'Best: {n_range[min_idx]} trees (OOB={oob_errors[min_idx]:.4f})')
+        ax.set(xlabel='Number of Trees (n_estimators)', ylabel='OOB Error Rate',
+               title=f'{title_prefix} Model — Random Forest OOB Error Curve')
+        ax.legend()
+        ax.grid(alpha=0.3)
+    except Exception as e:
+        ax.text(0.5, 0.5, f'OOB curve error:\n{e}', ha='center', va='center',
+                transform=ax.transAxes, fontsize=9)
+    _save(fig, 'rf_oob_curve')
+
+    # ── 7. Feature Analysis (LR coefficients + RF importances) ────────────
+    n_feat = len(feature_names)
+    fig, axes = plt.subplots(1, 2, figsize=(16, max(5, n_feat * 0.45)))
+    fig.suptitle(f'{title_prefix} Model — Feature Analysis', fontsize=13, fontweight='bold')
+    # LR coefficients
+    coef = lr_model.coef_[0]
+    idx_lr = np.argsort(np.abs(coef))
+    colors_lr = ['#e74c3c' if c > 0 else '#27ae60' for c in coef[idx_lr]]
+    axes[0].barh([feature_names[i] for i in idx_lr], coef[idx_lr], color=colors_lr)
+    axes[0].axvline(0, color='black', lw=0.8)
+    axes[0].set(title='LR Coefficients  (red = raises risk, green = lowers risk)',
+                xlabel='Coefficient value')
+    axes[0].grid(axis='x', alpha=0.3)
+    # RF feature importances
+    importances = rf_model.feature_importances_
+    idx_rf = np.argsort(importances)
+    axes[1].barh([feature_names[i] for i in idx_rf], importances[idx_rf], color='#2e86de')
+    axes[1].set(title='RF Feature Importances', xlabel='Importance')
+    axes[1].grid(axis='x', alpha=0.3)
+    plt.tight_layout()
+    _save(fig, 'feature_analysis')
+
+    # ── Terminal summary ───────────────────────────────────────────────────
+    print(f"\n{'='*60}")
+    print(f"ALL PLOTS SAVED FOR {title_prefix.upper()} MODEL")
+    print(f"{'='*60}")
+    for k, v in saved.items():
+        print(f"  {k:25s} -> {v}")
+
+    return saved
+
+
 def retrain_heart_model():
+    """
+    Train doctor (13-feature) heart model on media/heart.csv.
+    Deduplicates rows, tunes LogisticRegression C via stratified CV, fits on all clean rows,
+    and stores CV mean accuracy as the primary reported metric.
+    """
     try:
         csv_path = 'media/heart.csv'
         model_path = 'heart_model.pkl'
         acc_path = 'heart_model_acc.txt'
         scaler_path = 'heart_model_scaler.pkl'
-        
-        # Load and preprocess data
+
         df = pd.read_csv(csv_path)
         print("Data loaded, shape:", df.shape)
-        
-        # Basic data validation
-        required_columns = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 
-                          'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'target']
-        
+
+        required_columns = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg',
+                            'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'target']
+
         if not all(col in df.columns for col in required_columns):
             raise ValueError("Missing required columns in the dataset")
-        
+
+        df = df.dropna(subset=required_columns)
+        n_before = len(df)
+        df = df.drop_duplicates()
+        print(f"After dropna + dedupe: {len(df)} rows (removed {n_before - len(df)} duplicate / incomplete rows)")
+
         print("Class distribution:")
         print(df['target'].value_counts(normalize=True) * 100)
-        
-        X = df[['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 
-               'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']]
+
+        X = df[['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg',
+                'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']]
         y = df['target']
-        
-        # Split data
+
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+        param_grid = {'clf__C': [0.1, 0.25, 0.5, 1.0, 2.0, 4.0]}
+        pipe = Pipeline([
+            ('scaler', StandardScaler()),
+            ('clf', LogisticRegression(
+                max_iter=4000,
+                class_weight='balanced',
+                random_state=42,
+                solver='lbfgs',
+            )),
+        ])
+        print("Tuning LogisticRegression (5-fold stratified CV)...")
+        grid = GridSearchCV(
+            pipe, param_grid, cv=cv, scoring='accuracy', n_jobs=1, refit=True
+        )
+        grid.fit(X, y)
+        best_cv = float(grid.best_score_)
+        best_C = float(grid.best_params_['clf__C'])
+        print(f"Best CV mean accuracy: {best_cv * 100:.2f}% (C={best_C})")
+
+        final_pipe = grid.best_estimator_
+        model = final_pipe.named_steps['clf']
+        scaler = final_pipe.named_steps['scaler']
+
+        # Holdout confusion matrix / report (same split seed as before for stability)
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42, stratify=y
         )
-        print("Data split - train:", X_train.shape, "test:", X_test.shape)
-
-        # Scale features
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
-        print("Data scaled")
-
-        # Train a Logistic Regression model with balanced class weights
-        model = LogisticRegression(
-            max_iter=1000,
+        scaler_h = StandardScaler().fit(X_train)
+        X_tr_s = scaler_h.transform(X_train)
+        X_te_s = scaler_h.transform(X_test)
+        model_h = LogisticRegression(
+            max_iter=4000,
             class_weight='balanced',
-            random_state=42
+            random_state=42,
+            solver='lbfgs',
+            C=best_C,
         )
-        print("Training Logistic Regression model...")
-        model.fit(X_train_scaled, y_train)
-        
-        # Evaluate model
-        y_pred = model.predict(X_test_scaled)
-        accuracy = accuracy_score(y_test, y_pred)
+        model_h.fit(X_tr_s, y_train)
+        y_pred = model_h.predict(X_te_s)
+        holdout_acc = float(accuracy_score(y_test, y_pred))
         cm = confusion_matrix(y_test, y_pred)
         report = classification_report(y_test, y_pred)
-        
-        # Print detailed metrics to backend console
+
+        # --- Random Forest: same train/test split for apples-to-apples terminal comparison ---
+        rf = RandomForestClassifier(
+            n_estimators=300,
+            max_depth=12,
+            min_samples_leaf=2,
+            class_weight='balanced',
+            random_state=42,
+            n_jobs=1,
+        )
+        rf.fit(X_train, y_train)
+        y_pred_rf = rf.predict(X_test)
+        holdout_acc_rf = float(accuracy_score(y_test, y_pred_rf))
+        cm_rf = confusion_matrix(y_test, y_pred_rf)
+        report_rf = classification_report(y_test, y_pred_rf)
+
         print("=" * 60)
-        print("HEART DISEASE MODEL EVALUATION METRICS")
+        print("DOCTOR MODEL COMPARISON (same 80/20 stratified holdout)")
         print("=" * 60)
-        print(f"Model Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
-        print("\nCONFUSION MATRIX:")
-        print("                 Predicted")
-        print("                 No Disease | Disease")
-        print(f"Actual No Disease |    {cm[0][0]:4d}    |   {cm[0][1]:4d}")
-        print(f"Actual Disease    |    {cm[1][0]:4d}    |   {cm[1][1]:4d}")
-        print(f"\nTrue Negatives (TN): {cm[0][0]} - Correctly predicted healthy")
-        print(f"False Positives (FP): {cm[0][1]} - Healthy predicted as unhealthy")
-        print(f"False Negatives (FN): {cm[1][0]} - Unhealthy predicted as healthy")
-        print(f"True Positives (TP): {cm[1][1]} - Correctly predicted unhealthy")
-        print("\nCLASSIFICATION REPORT:")
+        print("\n--- Logistic Regression (scaled features, tuned C) ---")
+        print(f"Holdout accuracy: {holdout_acc * 100:.2f}%")
+        print(f"CV mean accuracy (saved primary metric): {best_cv * 100:.2f}%")
+        print("\nCONFUSION MATRIX (Logistic Regression):")
+        print(f"TN={cm[0][0]}, FP={cm[0][1]}, FN={cm[1][0]}, TP={cm[1][1]}")
+        print("\nCLASSIFICATION REPORT (Logistic Regression):")
         print(report)
-        
-        # Calculate and print F1 scores for each class
-        from sklearn.metrics import f1_score
-        f1_class_0 = f1_score(y_test, y_pred, pos_label=0)  # F1 for healthy class
-        f1_class_1 = f1_score(y_test, y_pred, pos_label=1)  # F1 for disease class
-        f1_macro = f1_score(y_test, y_pred, average='macro')  # Macro average F1
-        f1_weighted = f1_score(y_test, y_pred, average='weighted')  # Weighted average F1
-        
-        print("\nF1 SCORES:")
-        print(f"F1 Score (Healthy Class 0): {f1_class_0:.4f}")
-        print(f"F1 Score (Disease Class 1): {f1_class_1:.4f}")
-        print(f"F1 Score (Macro Average): {f1_macro:.4f}")
-        print(f"F1 Score (Weighted Average): {f1_weighted:.4f}")
+
+        print("\n" + "-" * 60)
+        print("--- Random Forest (raw features, same split) ---")
+        print(f"Holdout accuracy: {holdout_acc_rf * 100:.2f}%")
+        print("\nCONFUSION MATRIX (Random Forest):")
+        print(f"TN={cm_rf[0][0]}, FP={cm_rf[0][1]}, FN={cm_rf[1][0]}, TP={cm_rf[1][1]}")
+        print("\nCLASSIFICATION REPORT (Random Forest):")
+        print(report_rf)
+
+        print("\n" + "-" * 60)
+        print("SUMMARY (holdout only; production API still uses Logistic Regression)")
+        print(
+            f"  Logistic Regression holdout accuracy: {holdout_acc * 100:.2f}%  |  "
+            f"Random Forest holdout accuracy: {holdout_acc_rf * 100:.2f}%"
+        )
+        if holdout_acc_rf > holdout_acc:
+            print(f"  On this split, Random Forest is +{(holdout_acc_rf - holdout_acc) * 100:.2f} pp ahead.")
+        elif holdout_acc_rf < holdout_acc:
+            print(f"  On this split, Logistic Regression is +{(holdout_acc - holdout_acc_rf) * 100:.2f} pp ahead.")
+        else:
+            print("  Both models tie on holdout accuracy for this split.")
         print("=" * 60)
-        
-        # Save model and scaler
+
+        f1_class_0 = f1_score(y_test, y_pred, pos_label=0)
+        f1_class_1 = f1_score(y_test, y_pred, pos_label=1)
+        f1_macro = f1_score(y_test, y_pred, average='macro')
+        f1_weighted = f1_score(y_test, y_pred, average='weighted')
+
+        # ── Winner selection ───────────────────────────────────────────────
+        if holdout_acc_rf >= holdout_acc:
+            winner_model = rf
+            winner_type  = 'RandomForest'
+            winner_acc   = holdout_acc_rf
+            loser_type   = 'LogisticRegression'
+        else:
+            winner_model = model_h
+            winner_type  = 'LogisticRegression'
+            winner_acc   = holdout_acc
+            loser_type   = 'RandomForest'
+
+        print(f"\n*** WINNER: {winner_type} (holdout={winner_acc*100:.2f}%) saved as production model ***")
+        print(f"    ({loser_type} retained in terminal for analysis only)")
+
+        # ── Save production bundle + backward-compat scaler ────────────────
         print("Saving model and scaler...")
-        joblib.dump(model, model_path)
-        joblib.dump(scaler, scaler_path)
-        
-        # Save metrics in a more comprehensive format
+        prod_bundle = {'model': winner_model, 'model_type': winner_type, 'scaler': scaler_h}
+        joblib.dump(prod_bundle, model_path)
+        joblib.dump(scaler_h, scaler_path)
+
+        # ── Generate all evaluation plots ──────────────────────────────────
+        feature_cols_list = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg',
+                              'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+        try:
+            generate_model_plots('doctor', X_train, X_test, y_train, y_test,
+                                  model_h, rf, scaler_h, feature_cols_list, best_C=best_C)
+        except Exception as plot_err:
+            print(f"[WARN] Plot generation failed: {plot_err}")
+
+        winner_cm_doc  = cm_rf   if winner_type == 'RandomForest' else cm
+        winner_rep_doc = report_rf if winner_type == 'RandomForest' else report
         metrics = {
-            'accuracy': accuracy,
-            'confusion_matrix': cm.tolist(),
-            'classification_report': report,
+            'accuracy': best_cv,
+            'holdout_accuracy': holdout_acc,
+            'holdout_accuracy_rf': holdout_acc_rf,
+            'best_model_type': winner_type,
+            'best_C': best_C,
+            'cv_folds': 5,
+            'confusion_matrix': winner_cm_doc.tolist(),
+            'confusion_matrix_lr': cm.tolist(),
+            'confusion_matrix_rf': cm_rf.tolist(),
+            'classification_report': winner_rep_doc,
+            'classification_report_lr': report,
+            'classification_report_rf': report_rf,
             'feature_names': X.columns.tolist(),
             'trained_on': str(datetime.now()),
-            'model_type': 'LogisticRegression'
+            'model_type': winner_type,
+            'recipe_version': DOCTOR_HEART_MODEL_RECIPE_VERSION,
+            'training_rows': len(df),
+            'f1_scores': {
+                'healthy': float(f1_class_0),
+                'disease': float(f1_class_1),
+                'macro': float(f1_macro),
+                'weighted': float(f1_weighted),
+            },
         }
         with open(acc_path, 'w') as f:
             json.dump(metrics, f, indent=4)
-        
+
         print("Model training completed successfully!")
-        return model, scaler, accuracy
-        
+        return winner_model, scaler_h, best_cv
+
     except Exception as e:
         print(f"Error in model training: {str(e)}")
         raise
@@ -460,33 +762,52 @@ def prdict_heart_disease(list_data):
         model_path = 'heart_model.pkl'
         scaler_path = 'heart_model_scaler.pkl'
         acc_path = 'heart_model_acc.txt'
-        
-        # Check if model files exist and are valid
-        if not all(os.path.exists(p) for p in [model_path, scaler_path, acc_path]):
-            print("Model files not found. Retraining model...")
-            model, scaler, accuracy = retrain_heart_model()
-        else:
-            # Load existing model and scaler
+
+        accuracy = None
+        model = None
+        scaler = None
+
+        def _metrics_need_retrain(raw_content):
             try:
-                model = joblib.load(model_path)
-                scaler = joblib.load(scaler_path)
+                m = json.loads(raw_content)
+            except json.JSONDecodeError:
+                return True
+            if not isinstance(m, dict):
+                return True
+            return int(m.get('recipe_version', 0)) != DOCTOR_HEART_MODEL_RECIPE_VERSION
+
+        def _load_doctor_bundle():
+            raw = joblib.load(model_path)
+            if isinstance(raw, dict):
+                return raw['model'], raw.get('model_type', 'LogisticRegression'), raw['scaler']
+            # legacy: bare model object + separate scaler file
+            return raw, 'LogisticRegression', joblib.load(scaler_path)
+
+        model_type = 'LogisticRegression'
+        if not all(os.path.exists(p) for p in (model_path, scaler_path, acc_path)):
+            print("Model files not found. Retraining model...")
+            retrain_heart_model()
+            model, model_type, scaler = _load_doctor_bundle()
+            with open(acc_path, 'r') as f:
+                metrics = json.load(f)
+            accuracy = float(metrics.get('accuracy', 0.0)) * 100
+        else:
+            try:
                 with open(acc_path, 'r') as f:
                     content = f.read()
-                    try:
-                        # Try to parse as JSON (new format)
-                        metrics = json.loads(content)
-                        accuracy = float(metrics.get('accuracy', 0.0)) * 100  # Correctly get 'accuracy' and convert to percentage
-                    except json.JSONDecodeError:
-                        # Fallback to old float format if JSON decoding fails
-                        try:
-                            accuracy = float(content)
-                            if accuracy <= 1.0:
-                                accuracy = accuracy * 100
-                        except ValueError:
-                            accuracy = 0.0  # Default or error handling
+                stale = _metrics_need_retrain(content)
+                model, model_type, scaler = _load_doctor_bundle()
+                if stale:
+                    raise ValueError('recipe_outdated')
+                metrics = json.loads(content)
+                accuracy = float(metrics.get('accuracy', 0.0)) * 100
             except Exception as e:
-                print(f"Error loading model: {str(e)}. Retraining...")
-                model, scaler, accuracy = retrain_heart_model()
+                print(f"Error loading model or stale metrics ({e}). Retraining...")
+                retrain_heart_model()
+                model, model_type, scaler = _load_doctor_bundle()
+                with open(acc_path, 'r') as f:
+                    metrics = json.load(f)
+                accuracy = float(metrics.get('accuracy', 0.0)) * 100
         
         # Ensure input is in correct format
         if not isinstance(list_data, (list, np.ndarray)):
@@ -494,20 +815,26 @@ def prdict_heart_disease(list_data):
             
         if len(list_data) != 13:
             raise ValueError(f"Expected 13 features, got {len(list_data)}")
-        
-        # Convert to numpy array and reshape
-        X = np.array(list_data).reshape(1, -1)
+
+        feature_cols = [
+            'age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg',
+            'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal',
+        ]
+        X = pd.DataFrame([list_data], columns=feature_cols)
         
         # Print input data for debugging
         print("Input data:", list_data)
         
-        # Scale features
-        X_scaled = scaler.transform(X)
-        print("Scaled input:", X_scaled)
-        
+        # Scale features (RF uses raw; LR uses scaled)
+        if model_type == 'RandomForest':
+            X_input = X
+        else:
+            X_input = pd.DataFrame(scaler.transform(X), columns=X.columns)
+        print("Model type in use:", model_type)
+
         # Make prediction
-        pred = model.predict(X_scaled)
-        pred_proba = model.predict_proba(X_scaled)[0]
+        pred = model.predict(X_input)
+        pred_proba = model.predict_proba(X_input)[0]
         print("Prediction:", pred[0])
         print("Prediction probabilities:", pred_proba)
         
@@ -516,7 +843,7 @@ def prdict_heart_disease(list_data):
         print("CURRENT HEART DISEASE MODEL METRICS")
         print("=" * 50)
         print(f"Model Accuracy: {accuracy:.2f}%")
-        print("Model Type: Logistic Regression")
+        print(f"Model Type (production): {model_type}")
         print("Features Used: 13 medical parameters")
         
         # Load and display saved metrics if available
@@ -568,53 +895,56 @@ def prdict_heart_disease(list_data):
         
         # Calculate feature importance/impact for explainability
         feature_impacts = []
-        if hasattr(model, 'coef_') and model.coef_.shape[0] == 1:
-            # For binary classification with a single output (Logistic Regression)
-            coefficients = model.coef_[0]  # Get the coefficients for the positive class (1=unhealthy)
-            
-            # Get the mean and scale from the scaler for each feature
+        feature_names_list = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg',
+                               'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
+
+        def _lo(p):
+            p = float(np.clip(p, 1e-9, 1 - 1e-9))
+            return float(np.log(p / (1 - p)))
+
+        if model_type == 'RandomForest' and hasattr(model, 'feature_importances_'):
+            importances = model.feature_importances_
+            total_imp = importances.sum() if importances.sum() > 0 else 1.0
+            baseline_lo = _lo(pred_proba[1])
             feature_means = scaler.mean_
-            feature_scales = scaler.scale_
-            
-            # Define feature names for the doctor model (13 features)
-            feature_names = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal']
-            
-            for i, feature_name in enumerate(feature_names):
-                # Original value from list_data for context
+            for i, feature_name in enumerate(feature_names_list):
                 original_val = list_data[i] if i < len(list_data) else 0
-                
-                # Calculate the impact using the original value and coefficient
-                # Impact = (original_value - mean) / scale * coefficient
-                # This gives us the contribution of this feature to the log-odds
-                impact_score = ((original_val - feature_means[i]) / feature_scales[i]) * coefficients[i]
-                
-                # Normalize the impact to be between -1 and 1 for better interpretability
-                # We use the feature's scale to normalize the impact
-                # Ensure denominator is not zero
-                denominator = abs(coefficients[i]) * feature_scales[i]
-                if denominator == 0:
-                    normalized_impact = 0.0
-                else:
-                    normalized_impact = impact_score / denominator
-                
-                # Calculate the relative importance (percentage contribution)
-                # Sum of absolute impact scores for normalization
-                total_abs_impact = sum(abs(((list_data[j] - feature_means[j]) / feature_scales[j]) * coefficients[j]) for j in range(len(feature_names)) if j < len(list_data))
-                
-                if total_abs_impact == 0:
-                    relative_importance = 0.0
-                else:
-                    relative_importance = abs(impact_score) / total_abs_impact
-                
+                imp = float(importances[i])
+                # X is already a DataFrame — copy and perturb one column at a time
+                X_pert = X.copy()
+                X_pert.iloc[0, i] = feature_means[i]
+                p_pert = float(model.predict_proba(X_pert)[0][1])
+                direction_impact = baseline_lo - _lo(p_pert)
                 feature_impacts.append({
                     'feature': feature_name,
                     'value': original_val,
-                    'coefficient': round(coefficients[i], 3),
+                    'coefficient': round(imp, 4),
+                    'impact': round(direction_impact, 3),
+                    'normalized_impact': round(direction_impact, 3),
+                    'relative_importance': round(imp / total_imp * 100, 1),
+                })
+        elif hasattr(model, 'coef_') and model.coef_.shape[0] == 1:
+            coefficients = model.coef_[0]
+            feature_means = scaler.mean_
+            feature_scales = scaler.scale_
+            total_abs_impact = sum(
+                abs(((list_data[j] - feature_means[j]) / feature_scales[j]) * coefficients[j])
+                for j in range(len(feature_names_list)) if j < len(list_data)
+            ) or 1.0
+            for i, feature_name in enumerate(feature_names_list):
+                original_val = list_data[i] if i < len(list_data) else 0
+                impact_score = ((original_val - feature_means[i]) / feature_scales[i]) * coefficients[i]
+                denominator = abs(coefficients[i]) * feature_scales[i]
+                normalized_impact = impact_score / denominator if denominator != 0 else 0.0
+                feature_impacts.append({
+                    'feature': feature_name,
+                    'value': original_val,
+                    'coefficient': round(float(coefficients[i]), 3),
                     'impact': round(impact_score, 3),
                     'normalized_impact': round(normalized_impact, 3),
-                    'relative_importance': round(relative_importance * 100, 1)  # Convert to percentage
+                    'relative_importance': round(abs(impact_score) / total_abs_impact * 100, 1),
                 })
-        
+
         return accuracy, pred[0], pred_proba, feature_impacts
         
     except Exception as e:
@@ -709,7 +1039,11 @@ def add_heartdetail(request):
                 else:
                     value = 0
             elif field == 'cp':
-                value = int(value)  # Should be 1,2,3,4
+                try:
+                    value = normalize_doctor_heart_cp(int(value))
+                except (ValueError, TypeError):
+                    missing_fields.append(field)
+                    continue
             elif field == 'fbs':
                 value = 1 if str(value).lower() in ['1', 'true', 'yes'] else 0
             elif field == 'restecg':
@@ -717,15 +1051,25 @@ def add_heartdetail(request):
             elif field == 'exang':
                 value = 1 if str(value).lower() in ['1', 'true', 'yes'] else 0
             elif field == 'slope':
-                value = int(value)  # 1,2,3
+                try:
+                    value = normalize_doctor_heart_slope(int(value))
+                except (ValueError, TypeError):
+                    missing_fields.append(field)
+                    continue
             elif field == 'ca':
-                value = int(value)  # 0,1,2,3,4
+                value = int(value)
+                if value < 0 or value > 4:
+                    missing_fields.append(field)
+                    continue
             elif field == 'thal':
-                value = int(value)  # 1,2,3
-            
+                value = int(value)
+                if value < 0 or value > 3:
+                    missing_fields.append(field)
+                    continue
+
             try:
                 list_data.append(float(value))
-            except ValueError:
+            except (ValueError, TypeError):
                 missing_fields.append(field)
 
         if missing_fields:
@@ -742,33 +1086,20 @@ def add_heartdetail(request):
             'features': dict(zip(fields, list_data)) # Save features with their names
         }
 
-        # Load model and scaler if available
         model_path = 'heart_model.pkl'
         acc_path = 'heart_model_acc.txt'
         scaler_path = 'heart_model_scaler.pkl'
-        if not os.path.exists(model_path) or not os.path.exists(acc_path):
+        if not all(os.path.exists(p) for p in (model_path, scaler_path, acc_path)):
             retrain_heart_model()
-        model = joblib.load(model_path)
-        with open(acc_path, 'r') as f:
-            content = f.read()
+        else:
             try:
-                # Try to parse as JSON (new format)
-                metrics = json.loads(content)
-                accuracy = float(metrics.get('accuracy', 0.0)) * 100  # Correctly get 'accuracy' and convert to percentage
-            except json.JSONDecodeError:
-                # Fallback to old float format if JSON decoding fails
-                try:
-                    accuracy = float(content)
-                    if accuracy <= 1.0:
-                        accuracy = accuracy * 100
-                except ValueError:
-                    accuracy = 0.0  # Default or error handling
-        # If you have a scaler, load and apply it
-        # if os.path.exists(scaler_path):
-        #     scaler = joblib.load(scaler_path)
-        #     list_data_scaled = scaler.transform([list_data])
-        # else:
-        #     list_data_scaled = [list_data]
+                with open(acc_path, 'r') as f:
+                    _m = json.load(f)
+                if int(_m.get('recipe_version', 0)) != DOCTOR_HEART_MODEL_RECIPE_VERSION:
+                    retrain_heart_model()
+            except (json.JSONDecodeError, OSError, TypeError, ValueError):
+                retrain_heart_model()
+
         print("Doctor model input features:", list_data)
         accuracy, pred, pred_proba, feature_impacts = prdict_heart_disease(list_data)
 
@@ -809,7 +1140,10 @@ def add_heartdetail(request):
             )
 
         print(f"Doctor Final prediction: {pred_value} (0=healthy, 1=unhealthy)")
-        print(f"Doctor Confidence: healthy={healthy_prob:.1f}%, unhealthy={unhealthy_prob:.1f}%")
+        print(
+            f"Doctor Confidence: healthy={healthy_prob * 100:.1f}%, "
+            f"unhealthy={unhealthy_prob * 100:.1f}%"
+        )
         
         # Return JSON if AJAX request
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -1315,95 +1649,152 @@ def view_prediction_history(request, search_id):
 
 def train_patient_model():
     try:
-        csv_path = 'media/medical_dataset.csv'  
-        model_path = 'patient_model.pkl'
-        metrics_path = 'patient_model_metrics.json' 
-        
-        # Load data
+        csv_path    = 'media/medical_dataset.csv'
+        model_path  = 'patient_model.pkl'
+        metrics_path = 'patient_model_metrics.json'
+
         df = pd.read_csv(csv_path)
         print("Patient data loaded, shape:", df.shape)
-        
-        # # Preprocessing: Map 'Gender' column
-        # df['Gender'] = df['Gender'].map({'Male':0, 'Female':1})
-        
-        # Define features (X) and target (y) based on notebook
+
         X = df.drop('Result', axis=1)
         y = df['Result']
-        
-        # Get the list of feature names
         feature_names = X.columns.tolist()
         print("Features used:", feature_names)
+        print("Class distribution:")
+        print(y.value_counts(normalize=True) * 100)
 
-        # Split data 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42, stratify=y
+        )
         print("Patient data split - train:", X_train.shape, "test:", X_test.shape)
 
-        # Scale features (using StandardScaler) and train model (Logistic Regression)
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
-        model = LogisticRegression(max_iter=1000)
-        print("Training patient Logistic Regression model (scaled features, max_iter=1000)...")
-        model.fit(X_train_scaled, y_train)
-        
-        # Evaluate model 
-        accuracy = model.score(X_test_scaled, y_test)
-        y_pred = model.predict(X_test_scaled)
-        cm = confusion_matrix(y_test, y_pred)
-        report = classification_report(y_test, y_pred)
-        
-        # Print detailed metrics to backend console
+        # ── Logistic Regression with GridSearchCV ──────────────────────────
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+        lr_pipe = Pipeline([
+            ('scaler', StandardScaler()),
+            ('clf', LogisticRegression(max_iter=4000, class_weight='balanced',
+                                        random_state=42, solver='lbfgs')),
+        ])
+        param_grid = {'clf__C': [0.1, 0.25, 0.5, 1.0, 2.0, 4.0]}
+        print("Tuning patient Logistic Regression (5-fold stratified CV)...")
+        grid = GridSearchCV(lr_pipe, param_grid, cv=cv, scoring='accuracy', n_jobs=1, refit=True)
+        grid.fit(X_train, y_train)
+        best_cv_lr = float(grid.best_score_)
+        best_C     = float(grid.best_params_['clf__C'])
+        print(f"LR  Best CV accuracy: {best_cv_lr*100:.2f}% (C={best_C})")
+
+        lr_final_pipe = grid.best_estimator_
+        scaler_lr     = lr_final_pipe.named_steps['scaler']
+        lr_model      = lr_final_pipe.named_steps['clf']
+
+        X_tr_s = scaler_lr.transform(X_train)
+        X_te_s = scaler_lr.transform(X_test)
+        y_pred_lr = lr_model.predict(X_te_s)
+        acc_lr = float(accuracy_score(y_test, y_pred_lr))
+        cm_lr  = confusion_matrix(y_test, y_pred_lr)
+        rep_lr = classification_report(y_test, y_pred_lr)
+
+        # ── Random Forest ──────────────────────────────────────────────────
+        rf = RandomForestClassifier(
+            n_estimators=300, max_depth=12, min_samples_leaf=2,
+            class_weight='balanced', random_state=42, n_jobs=1,
+        )
+        print("Training patient Random Forest (300 trees)...")
+        rf.fit(X_train, y_train)
+        y_pred_rf = rf.predict(X_test)
+        acc_rf  = float(accuracy_score(y_test, y_pred_rf))
+        cm_rf   = confusion_matrix(y_test, y_pred_rf)
+        rep_rf  = classification_report(y_test, y_pred_rf)
+
+        # ── Terminal comparison ────────────────────────────────────────────
         print("=" * 60)
-        print("PATIENT MODEL EVALUATION METRICS")
+        print("PATIENT MODEL COMPARISON (80/20 stratified holdout)")
         print("=" * 60)
-        print(f"Model Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
-        print("\nCONFUSION MATRIX:")
-        print("                 Predicted")
-        print("                 Healthy | Unhealthy")
-        print(f"Actual Healthy    |    {cm[0][0]:4d}    |   {cm[0][1]:4d}")
-        print(f"Actual Unhealthy  |    {cm[1][0]:4d}    |   {cm[1][1]:4d}")
-        print(f"\nTrue Negatives (TN): {cm[0][0]} - Correctly predicted healthy")
-        print(f"False Positives (FP): {cm[0][1]} - Healthy predicted as unhealthy")
-        print(f"False Negatives (FN): {cm[1][0]} - Unhealthy predicted as healthy")
-        print(f"True Positives (TP): {cm[1][1]} - Correctly predicted unhealthy")
-        print("\nCLASSIFICATION REPORT:")
-        print(report)
-        
-        # Calculate and print F1 scores for each class
-        from sklearn.metrics import f1_score
-        f1_class_0 = f1_score(y_test, y_pred, pos_label=0)  # F1 for healthy class
-        f1_class_1 = f1_score(y_test, y_pred, pos_label=1)  # F1 for unhealthy class
-        f1_macro = f1_score(y_test, y_pred, average='macro')  # Macro average F1
-        f1_weighted = f1_score(y_test, y_pred, average='weighted')  # Weighted average F1
-        
-        print("\nF1 SCORES:")
-        print(f"F1 Score (Healthy Class 0): {f1_class_0:.4f}")
-        print(f"F1 Score (Unhealthy Class 1): {f1_class_1:.4f}")
-        print(f"F1 Score (Macro Average): {f1_macro:.4f}")
-        print(f"F1 Score (Weighted Average): {f1_weighted:.4f}")
+        print(f"\n--- Logistic Regression (best C={best_C}, CV={best_cv_lr*100:.2f}%) ---")
+        print(f"Holdout accuracy: {acc_lr*100:.2f}%")
+        print(f"TN={cm_lr[0][0]}, FP={cm_lr[0][1]}, FN={cm_lr[1][0]}, TP={cm_lr[1][1]}")
+        print(rep_lr)
+
+        print(f"\n--- Random Forest (300 trees) ---")
+        print(f"Holdout accuracy: {acc_rf*100:.2f}%")
+        print(f"TN={cm_rf[0][0]}, FP={cm_rf[0][1]}, FN={cm_rf[1][0]}, TP={cm_rf[1][1]}")
+        print(rep_rf)
+
+        f1_lr_0 = f1_score(y_test, y_pred_lr, pos_label=0)
+        f1_lr_1 = f1_score(y_test, y_pred_lr, pos_label=1)
+        f1_lr_m = f1_score(y_test, y_pred_lr, average='macro')
+        f1_lr_w = f1_score(y_test, y_pred_lr, average='weighted')
+        print(f"LR F1  healthy={f1_lr_0:.4f}  disease={f1_lr_1:.4f}  "
+              f"macro={f1_lr_m:.4f}  weighted={f1_lr_w:.4f}")
+
+        f1_rf_0 = f1_score(y_test, y_pred_rf, pos_label=0)
+        f1_rf_1 = f1_score(y_test, y_pred_rf, pos_label=1)
+        f1_rf_m = f1_score(y_test, y_pred_rf, average='macro')
+        f1_rf_w = f1_score(y_test, y_pred_rf, average='weighted')
+        print(f"RF F1  healthy={f1_rf_0:.4f}  disease={f1_rf_1:.4f}  "
+              f"macro={f1_rf_m:.4f}  weighted={f1_rf_w:.4f}")
+
+        # ── Winner selection ───────────────────────────────────────────────
+        if acc_rf >= acc_lr:
+            winner_model = rf
+            winner_type  = 'RandomForest'
+            winner_acc   = acc_rf
+            loser_type   = 'LogisticRegression'
+        else:
+            winner_model = lr_model
+            winner_type  = 'LogisticRegression'
+            winner_acc   = acc_lr
+            loser_type   = 'RandomForest'
+
+        print(f"\n*** WINNER: {winner_type} (holdout={winner_acc*100:.2f}%) saved as production model ***")
+        print(f"    ({loser_type} retained in terminal for analysis only)")
         print("=" * 60)
-        
-        # Save model, scalar, and metrics
+
+        # ── Save production bundle ─────────────────────────────────────────
         print("Saving patient model and metrics...")
-        # joblib.dump(model, model_path)
-        joblib.dump({'model': model, 'scaler': scaler}, model_path)
-        
+        prod_bundle = {'model': winner_model, 'model_type': winner_type, 'scaler': scaler_lr}
+        joblib.dump(prod_bundle, model_path)
+
+        # ── Generate all evaluation plots ──────────────────────────────────
+        try:
+            generate_model_plots('patient', X_train, X_test, y_train, y_test,
+                                  lr_model, rf, scaler_lr, feature_names, best_C=best_C)
+        except Exception as plot_err:
+            print(f"[WARN] Patient plot generation failed: {plot_err}")
+
+        winner_cm  = cm_rf  if winner_type == 'RandomForest' else cm_lr
+        winner_rep = rep_rf if winner_type == 'RandomForest' else rep_lr
         metrics = {
-            'accuracy': accuracy,
+            'accuracy': winner_acc,
+            'holdout_accuracy_lr': acc_lr,
+            'holdout_accuracy_rf': acc_rf,
+            'best_model_type': winner_type,
+            'best_C': best_C,
+            'cv_accuracy_lr': best_cv_lr,
             'feature_names': feature_names,
-            'confusion_matrix': cm.tolist(),
-            'classification_report': report,
-            'model_version': 'v1.0',
-            'trained_on': str(datetime.now())
+            'confusion_matrix': winner_cm.tolist(),
+            'confusion_matrix_rf': cm_rf.tolist(),
+            'confusion_matrix_lr': cm_lr.tolist(),
+            'classification_report': winner_rep,
+            'classification_report_rf': rep_rf,
+            'classification_report_lr': rep_lr,
+            'model_version': 'v2.0',
+            'trained_on': str(datetime.now()),
+            'f1_scores': {
+                'lr_healthy': float(f1_lr_0), 'lr_disease': float(f1_lr_1),
+                'lr_macro': float(f1_lr_m),   'lr_weighted': float(f1_lr_w),
+                'rf_healthy': float(f1_rf_0), 'rf_disease': float(f1_rf_1),
+                'rf_macro': float(f1_rf_m),   'rf_weighted': float(f1_rf_w),
+            },
         }
         with open(metrics_path, 'w') as f:
-            json.dump(metrics, f)
-        
+            json.dump(metrics, f, indent=4)
+
         print("Patient model training completed successfully!")
-        
+
     except FileNotFoundError:
         print(f"Error: Patient dataset not found at {csv_path}")
-        raise 
+        raise
     except Exception as e:
         print(f"Error in patient model training: {str(e)}")
         raise
@@ -1418,40 +1809,30 @@ def prdict_patient_heart_disease(patient_input_data: dict):
             print("Patient model files not found. Training model...")
             train_patient_model()
         
-        # Load model and metrics
+        def _load_patient_bundle():
+            raw = joblib.load(model_path)
+            m   = raw['model']
+            mt  = raw.get('model_type', 'LogisticRegression')
+            sc  = raw['scaler']
+            return m, mt, sc
+
+        model_type = 'LogisticRegression'
         try:
-            loaded_data = joblib.load(model_path)
-            model = loaded_data['model']
-            scaler = loaded_data['scaler']
-            # model = joblib.load(model_path) 2025/6/9 yo matra thyo
+            model, model_type, scaler = _load_patient_bundle()
             with open(metrics_path, 'r') as f:
                 metrics = json.load(f)
             feature_names = metrics.get('feature_names', [])
-            accuracy = float(metrics.get('accuracy', 0.0)) * 100 # Convert accuracy to percentage
-            print(f"Loaded patient model with accuracy: {accuracy:.2f}%")
-
-            # Debugging: Print coefficients and scaler info for analysis
-            if hasattr(model, 'coef_'):
-                print("Model Coefficients (for positive class):")
-                for i, name in enumerate(feature_names):
-                    print(f"  {name}: {model.coef_[0][i]:.4f}")
-            if hasattr(scaler, 'mean_') and hasattr(scaler, 'scale_'):
-                print("Scaler Means and Scales:")
-                for i, name in enumerate(feature_names):
-                    print(f"  {name}: Mean={scaler.mean_[i]:.4f}, Scale={scaler.scale_[i]:.4f}")
-
+            accuracy = float(metrics.get('accuracy', 0.0)) * 100
+            print(f"Loaded patient model ({model_type}) with accuracy: {accuracy:.2f}%")
         except Exception as e:
             print(f"Error loading patient model or metrics: {str(e)}. Retraining...")
             train_patient_model()
-            # model = joblib.load(model_path) 2025/6/9 yo matra thyo
-            loaded_data = joblib.load(model_path)
-            model = loaded_data['model']
-            scaler = loaded_data['scaler']
+            model, model_type, scaler = _load_patient_bundle()
             with open(metrics_path, 'r') as f:
                 metrics = json.load(f)
             feature_names = metrics.get('feature_names', [])
-            accuracy = float(metrics.get('accuracy', 0.0)) * 100 # Convert accuracy to percentage
-            print(f"Retrained and loaded patient model with accuracy: {accuracy:.2f}%")
+            accuracy = float(metrics.get('accuracy', 0.0)) * 100
+            print(f"Retrained and loaded patient model ({model_type}) with accuracy: {accuracy:.2f}%")
 
         # Prepare input data for prediction by ensuring correct order and conversion to NumPy array
         input_data_list = [patient_input_data.get(feature, 0) for feature in feature_names]
@@ -1461,16 +1842,17 @@ def prdict_patient_heart_disease(patient_input_data: dict):
             missing_or_invalid_features = [feature_names[i] for i, val in enumerate(input_data_list) if val is None or (isinstance(val, (int, float)) and val < 0)]
             raise ValueError(f"Missing or invalid input data for features: {missing_or_invalid_features}")
 
-        # Convert to numpy array and reshape for single prediction
-        X_predict = np.array(input_data_list).reshape(1, -1)
-        
-        # Scale features
-        X_predict_scaled = scaler.transform(X_predict)
-        
-        # Make prediction and get probabilities
-        pred = model.predict(X_predict_scaled)
-        pred_proba = model.predict_proba(X_predict_scaled)[0]
-        print("Patient prediction:", pred[0])
+        X_predict_raw = np.array(input_data_list).reshape(1, -1)
+
+        # RF uses raw features as a named DataFrame to avoid sklearn feature-name warnings
+        if model_type == 'RandomForest':
+            X_predict_input = pd.DataFrame(X_predict_raw, columns=feature_names)
+        else:
+            X_predict_input = scaler.transform(X_predict_raw)
+
+        pred = model.predict(X_predict_input)
+        pred_proba = model.predict_proba(X_predict_input)[0]
+        print(f"Patient prediction ({model_type}):", pred[0])
         print("Patient prediction probabilities:", pred_proba)
         
         # Print current model metrics for reference
@@ -1478,7 +1860,7 @@ def prdict_patient_heart_disease(patient_input_data: dict):
         print("CURRENT PATIENT MODEL METRICS")
         print("=" * 50)
         print(f"Model Accuracy: {accuracy:.2f}%")
-        print("Model Type: Logistic Regression")
+        print(f"Model Type (production): {model_type}")
         print("Features Used: 19 patient parameters")
         
         # Load and display saved metrics if available
@@ -1526,260 +1908,70 @@ def prdict_patient_heart_disease(patient_input_data: dict):
         
         # Calculate feature importance/impact for explainability
         feature_impacts = []
-        if hasattr(model, 'coef_') and model.coef_.shape[0] == 1:
-            # For binary classification with a single output (Logistic Regression)
-            coefficients = model.coef_[0]  # Get the coefficients for the positive class (1=unhealthy)
-            
-            # Get the mean and scale from the scaler for each feature
+        def _lo(p):
+            p = float(np.clip(p, 1e-9, 1 - 1e-9))
+            return float(np.log(p / (1 - p)))
+
+        if model_type == 'RandomForest' and hasattr(model, 'feature_importances_'):
+            importances = model.feature_importances_
+            total_imp = importances.sum() if importances.sum() > 0 else 1.0
             feature_means = scaler.mean_
-            feature_scales = scaler.scale_
-            
-            # Calculate total log-odds contribution using medical knowledge
-            total_log_odds = 0
+            # Neutral baseline: all features at their training means
+            X_neutral = pd.DataFrame([feature_means], columns=feature_names)
+            neutral_lo = _lo(float(model.predict_proba(X_neutral)[0][1]))
+
+            # Logically dependent features must be perturbed together, otherwise
+            # we'd evaluate impossible records like "non-smoker with average smoking duration"
+            FEATURE_GROUPS = [
+                ['Smoke', 'Time_of_Smoking', 'Frequency_of_smoking'],
+                ['Chest_Pain', 'Chest_Pain_Severity'],
+                ['Short_Breath', 'Short_Breath_Duration'],
+            ]
+            group_of = {f: g for g in FEATURE_GROUPS for f in g}
+            name_to_idx = {f: idx for idx, f in enumerate(feature_names)}
+
             for i, feature_name in enumerate(feature_names):
                 original_val = patient_input_data.get(feature_name, 0)
-                
-                # Calculate impact using the same medical knowledge logic
-                if feature_name == 'Age':
-                    if original_val >= 65:
-                        log_odds_contribution = 0.5
-                    elif original_val >= 50:
-                        log_odds_contribution = 0.3
-                    elif original_val >= 35:
-                        log_odds_contribution = 0.1
-                    else:
-                        log_odds_contribution = -0.1
-                elif feature_name == 'Gender':
-                    log_odds_contribution = 0.2 if original_val == 0 else -0.1
-                elif feature_name == 'BMI':
-                    if original_val >= 30:
-                        log_odds_contribution = 0.4
-                    elif original_val >= 25:
-                        log_odds_contribution = 0.2
-                    else:
-                        log_odds_contribution = -0.1
-                elif feature_name == 'Smoke':
-                    log_odds_contribution = 0.4 if original_val == 1 else -0.1
-                elif feature_name == 'Time_of_Smoking':
-                    if original_val >= 20:
-                        log_odds_contribution = 0.5
-                    elif original_val >= 10:
-                        log_odds_contribution = 0.3
-                    elif original_val >= 5:
-                        log_odds_contribution = 0.2
-                    else:
-                        log_odds_contribution = 0.0
-                elif feature_name == 'High_Blood_Pressure':
-                    log_odds_contribution = 0.4 if original_val == 1 else -0.1
-                elif feature_name == 'Diabetes':
-                    log_odds_contribution = 0.5 if original_val == 1 else -0.1
-                elif feature_name == 'High_Cholesterol':
-                    log_odds_contribution = 0.3 if original_val == 1 else -0.1
-                elif feature_name == 'Family_History':
-                    log_odds_contribution = 0.3 if original_val == 1 else -0.1
-                elif feature_name == 'Chest_Pain':
-                    if original_val >= 3:
-                        log_odds_contribution = 0.5
-                    elif original_val >= 2:
-                        log_odds_contribution = 0.3
-                    elif original_val >= 1:
-                        log_odds_contribution = 0.2
-                    else:
-                        log_odds_contribution = 0.0
-                elif feature_name == 'Chest_Pain_Severity':
-                    if original_val >= 4:
-                        log_odds_contribution = 0.5
-                    elif original_val >= 3:
-                        log_odds_contribution = 0.4
-                    elif original_val >= 2:
-                        log_odds_contribution = 0.3
-                    else:
-                        log_odds_contribution = 0.0
-                elif feature_name == 'Short_Breath':
-                    if original_val >= 3:
-                        log_odds_contribution = 0.4
-                    elif original_val >= 2:
-                        log_odds_contribution = 0.3
-                    elif original_val >= 1:
-                        log_odds_contribution = 0.2
-                    else:
-                        log_odds_contribution = 0.0
-                elif feature_name == 'Exercise':
-                    log_odds_contribution = 0.3 if original_val == 0 else -0.2
-                elif feature_name == 'Fatty_Food':
-                    if original_val >= 4:
-                        log_odds_contribution = 0.4
-                    elif original_val >= 3:
-                        log_odds_contribution = 0.3
-                    elif original_val >= 2:
-                        log_odds_contribution = 0.2
-                    else:
-                        log_odds_contribution = 0.0
-                elif feature_name == 'Stress':
-                    if original_val >= 4:
-                        log_odds_contribution = 0.4
-                    elif original_val >= 3:
-                        log_odds_contribution = 0.3
-                    elif original_val >= 2:
-                        log_odds_contribution = 0.2
-                    else:
-                        log_odds_contribution = 0.0
-                else:
-                    # For other features, use reduced model coefficient
-                    log_odds_contribution = ((original_val - feature_means[i]) / feature_scales[i]) * coefficients[i] * 0.5
-                
-                total_log_odds += log_odds_contribution
-            
-            for i, feature_name in enumerate(feature_names):
-                # Original value from patient_input_data for context
-                original_val = patient_input_data.get(feature_name, 0)
-                
-                # Calculate impact based on medical knowledge rather than flawed model coefficients
-                # This ensures medically accurate risk assessment
-                impact_score = 0.0  # Default
-                
-                if feature_name == 'Age':
-                    if original_val >= 65:
-                        impact_score = 0.5  # Strong risk
-                    elif original_val >= 50:
-                        impact_score = 0.3  # Moderate risk
-                    elif original_val >= 35:
-                        impact_score = 0.1  # Low risk
-                    else:
-                        impact_score = -0.1  # Protective
-                        
-                elif feature_name == 'Gender':
-                    if original_val == 0:  # Male
-                        impact_score = 0.2  # Moderate risk
-                    else:  # Female
-                        impact_score = -0.1  # Slightly protective
-                        
-                elif feature_name == 'BMI':
-                    if original_val >= 30:
-                        impact_score = 0.4  # Strong risk (obese)
-                    elif original_val >= 25:
-                        impact_score = 0.2  # Moderate risk (overweight)
-                    else:
-                        impact_score = -0.1  # Protective
-                        
-                elif feature_name == 'Smoke':
-                    if original_val == 1:
-                        impact_score = 0.4  # Strong risk
-                    else:
-                        impact_score = -0.1  # Protective
-                        
-                elif feature_name == 'Time_of_Smoking':
-                    if original_val >= 20:
-                        impact_score = 0.5  # Strong risk
-                    elif original_val >= 10:
-                        impact_score = 0.3  # Moderate risk
-                    elif original_val >= 5:
-                        impact_score = 0.2  # Low risk
-                    else:
-                        impact_score = 0.0  # No impact
-                        
-                elif feature_name == 'High_Blood_Pressure':
-                    if original_val == 1:
-                        impact_score = 0.4  # Strong risk
-                    else:
-                        impact_score = -0.1  # Protective
-                        
-                elif feature_name == 'Diabetes':
-                    if original_val == 1:
-                        impact_score = 0.5  # Strong risk
-                    else:
-                        impact_score = -0.1  # Protective
-                        
-                elif feature_name == 'High_Cholesterol':
-                    if original_val == 1:
-                        impact_score = 0.3  # Moderate risk
-                    else:
-                        impact_score = -0.1  # Protective
-                        
-                elif feature_name == 'Family_History':
-                    if original_val == 1:
-                        impact_score = 0.3  # Moderate risk
-                    else:
-                        impact_score = -0.1  # Protective
-                        
-                elif feature_name == 'Chest_Pain':
-                    if original_val >= 3:
-                        impact_score = 0.5  # Strong risk
-                    elif original_val >= 2:
-                        impact_score = 0.3  # Moderate risk
-                    elif original_val >= 1:
-                        impact_score = 0.2  # Low risk
-                    else:
-                        impact_score = 0.0  # No impact
-                        
-                elif feature_name == 'Chest_Pain_Severity':
-                    if original_val >= 4:
-                        impact_score = 0.5  # Strong risk
-                    elif original_val >= 3:
-                        impact_score = 0.4  # Moderate risk
-                    elif original_val >= 2:
-                        impact_score = 0.3  # Low risk
-                    else:
-                        impact_score = 0.0  # No impact
-                        
-                elif feature_name == 'Short_Breath':
-                    if original_val >= 3:
-                        impact_score = 0.4  # Strong risk
-                    elif original_val >= 2:
-                        impact_score = 0.3  # Moderate risk
-                    elif original_val >= 1:
-                        impact_score = 0.2  # Low risk
-                    else:
-                        impact_score = 0.0  # No impact
-                        
-                elif feature_name == 'Exercise':
-                    if original_val == 0:  # No exercise
-                        impact_score = 0.3  # Moderate risk
-                    else:
-                        impact_score = -0.2  # Protective
-                        
-                elif feature_name == 'Fatty_Food':
-                    if original_val >= 4:
-                        impact_score = 0.4  # Strong risk
-                    elif original_val >= 3:
-                        impact_score = 0.3  # Moderate risk
-                    elif original_val >= 2:
-                        impact_score = 0.2  # Low risk
-                    else:
-                        impact_score = 0.0  # No impact
-                        
-                elif feature_name == 'Stress':
-                    if original_val >= 4:
-                        impact_score = 0.4  # Strong risk
-                    elif original_val >= 3:
-                        impact_score = 0.3  # Moderate risk
-                    elif original_val >= 2:
-                        impact_score = 0.2  # Low risk
-                    else:
-                        impact_score = 0.0  # No impact
-                        
-                else:
-                    # For other features, use the model coefficient but with reduced weight
-                    impact_score = ((original_val - feature_means[i]) / feature_scales[i]) * coefficients[i] * 0.5
-                
-                # Calculate relative importance as percentage of total log-odds contribution
-                if total_log_odds != 0:
-                    relative_importance = abs(impact_score) / abs(total_log_odds) * 100
-                else:
-                    relative_importance = 0.0
-                
-                # Normalize impact to [-1, 1] range using sigmoid scaling
-                # This makes the impact more interpretable
-                normalized_impact = 2 * (1 / (1 + np.exp(-impact_score))) - 1
-                
+                imp = float(importances[i])
+                # Compare this patient's actual value(s) against the neutral/average patient
+                X_single = X_neutral.copy()
+                group = group_of.get(feature_name, [feature_name])
+                for gf in group:
+                    if gf in name_to_idx:
+                        X_single.iloc[0, name_to_idx[gf]] = patient_input_data.get(gf, 0)
+                p_single = float(model.predict_proba(X_single)[0][1])
+                direction_impact = _lo(p_single) - neutral_lo
                 feature_impacts.append({
                     'feature': feature_name,
                     'value': original_val,
-                    'coefficient': round(coefficients[i], 3),
+                    'coefficient': round(imp, 4),
+                    'impact': round(direction_impact, 3),
+                    'normalized_impact': round(direction_impact, 3),
+                    'relative_importance': round(imp / total_imp * 100, 1),
+                })
+        elif hasattr(model, 'coef_') and model.coef_.shape[0] == 1:
+            coefficients  = model.coef_[0]
+            feature_means = scaler.mean_
+            feature_scales = scaler.scale_
+            total_abs = sum(
+                abs(((patient_input_data.get(feature_names[j], 0) - feature_means[j])
+                     / feature_scales[j]) * coefficients[j])
+                for j in range(len(feature_names))
+            ) or 1.0
+            for i, feature_name in enumerate(feature_names):
+                original_val = patient_input_data.get(feature_name, 0)
+                impact_score = ((original_val - feature_means[i]) / feature_scales[i]) * coefficients[i]
+                denom = abs(coefficients[i]) * feature_scales[i]
+                normalized_impact = impact_score / denom if denom != 0 else 0.0
+                feature_impacts.append({
+                    'feature': feature_name,
+                    'value': original_val,
+                    'coefficient': round(float(coefficients[i]), 3),
                     'impact': round(impact_score, 3),
                     'normalized_impact': round(normalized_impact, 3),
-                    'relative_importance': round(relative_importance, 1)  # Convert to percentage
+                    'relative_importance': round(abs(impact_score) / total_abs * 100, 1),
                 })
+
         
         # Use standard threshold for balanced classification
         # If the probability of being unhealthy (pred_proba[1]) is > 0.5, predict 1 (unhealthy)
@@ -1928,7 +2120,10 @@ def add_heartdetail_patient(request):
                 )
 
         print(f"Patient Final prediction: {pred_value} (0=healthy, 1=unhealthy)")
-        print(f"Patient Confidence: healthy={pred_proba[0]:.1f}%, unhealthy={pred_proba[1]:.1f}%")
+        print(
+            f"Patient Confidence: healthy={pred_proba[0] * 100:.1f}%, "
+            f"unhealthy={pred_proba[1] * 100:.1f}%"
+        )
         
         # Return JSON if AJAX request
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -1969,11 +2164,60 @@ def add_heartdetail_patient(request):
             ).order_by('category')
         
         return render(request, 'predict_disease.html', {
-            'pred': pred_text, 
-            'accuracy': formatted_accuracy, 
+            'pred': pred_text,
+            'accuracy': formatted_accuracy,
             'doctor': doctors,
             'patient_city': patient_city,
-            'feature_impacts': feature_impacts
+            'feature_impacts': feature_impacts,
+            'is_patient': True,
+            'pred_value': int(pred_value),
+            'unhealthy_prob_pct': round(float(pred_proba[1]) * 100, 1),
         })
         
     return render(request, 'add_heartdetail_patient.html', {'patient_name': patient_name, 'patient_age': patient_age})
+
+
+def nearby_hospitals(request):
+    import math
+    try:
+        lat = float(request.GET.get('lat', 0))
+        lng = float(request.GET.get('lng', 0))
+        radius = float(request.GET.get('radius', 5))
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'Invalid coordinates'}, status=400)
+
+    data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Machine_Learning', 'hospitals_nepal.json')
+    try:
+        with open(data_path, 'r', encoding='utf-8') as f:
+            all_hospitals = json.load(f)
+    except FileNotFoundError:
+        return JsonResponse({'error': 'Hospital data not found'}, status=500)
+
+    def haversine(lat1, lon1, lat2, lon2):
+        R = 6371
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
+        return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    EXCLUDE = ['beauty', 'parlour', 'parlor', 'pathology', 'laboratory', 'lab ', 'diagnostic',
+               'optical', 'pharmacy', 'veterinary', 'animal', 'pet clinic', 'pet hospital',
+               'ayurvedic', 'herbal', 'tibetan', 'tibetian', 'traditional medicine', 'medicine center',
+               'dental', 'dentist', 'skin care', 'spa ', 'massage', 'blind', 'mata,', 'temple', 'mandir',
+               'eye center', 'eye centre', 'eye hospital', 'vision eye', 'trauma center', 'trauma centre',
+               'jgo']
+
+    def is_medical(name):
+        n = name.lower()
+        return not any(kw in n for kw in EXCLUDE)
+
+    nearby = []
+    for h in all_hospitals:
+        if not is_medical(h['name']):
+            continue
+        d = haversine(lat, lng, h['lat'], h['lon'])
+        if d <= radius:
+            nearby.append({**h, 'distance': round(d, 3)})
+
+    nearby.sort(key=lambda x: x['distance'])
+    return JsonResponse({'hospitals': nearby[:20]})
