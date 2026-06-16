@@ -1,66 +1,201 @@
 {% extends 'index.html' %}
 {% block body %}
-<div class="container py-5">
-    <div class="row">
-        <div class="col-md-12">
-            <h2 class="text-center mb-4">Prediction History</h2>
-            <div class="card mb-4">
-                <!-- <div class="card-header">
-                    <h4>Original Prediction</h4>
-                </div> -->
-                <div class="card-body">
-                    
-                    <p style="color: #000000; font-size: 18px;"><strong>Date:</strong> {{ search_data.created }}</p>
-                    <br>
-                    <p style="color: #000000; font-size: 18px;"><strong>Input Values:</strong></p>
-                    <ul class="list-group list-group-flush mb-3">
-                        {% for key, value in main_formatted_values.items %}
-                            <li class="list-group-item" style="padding: 10px 0px;  border: none;"><strong>{{ key }}:</strong> {{ value }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
+<style>
+  .ph-container {
+    padding: 30px 15px 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
-            <!-- <h3 class="mb-3">History</h3>
-            {% if history %}
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Prediction Accuracy</th>
-                                <th>Result</th>
-                                <th>Values</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for entry in history %}
-                            <tr>
-                                <td>{{ entry.created }}</td>
-                                <td>{{ entry.prediction_accuracy|floatformat:"2" }}%</td>
-                                <td>
-                                    {% if entry.result == '0' %}
-                                        <span class="text-success">Healthy</span>
-                                    {% else %}
-                                        <span class="text-danger">Unhealthy</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <ul class="list-group list-group-flush" style="background-color: transparent;">
-                                    {% for key, value in entry.formatted_values.items %}
-                                        <li class="list-group-item" style="background-color: transparent; border: none; padding: .25rem 0;"><strong>{{ key }}:</strong> {{ value }}</li>
-                                    {% endfor %}
-                                    </ul>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-center">No history available for this prediction.</p>
-            {% endif %} -->
-        </div>
+  .ph-card {
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: clamp(20px, 4vw, 40px);
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .ph-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 24px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid #eef1f4;
+  }
+
+  .ph-header h1 {
+    margin: 0 0 6px 0;
+    font-size: clamp(1.4rem, 3.5vw, 1.9rem);
+    font-weight: 700;
+    color: #1a3c34;
+  }
+
+  .ph-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ph-badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .status-pill {
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: white;
+  }
+
+  .status-pill.healthy {
+    background: #00897b;
+  }
+
+  .status-pill.unhealthy {
+    background: #dc3545;
+  }
+
+  .accuracy-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: #eef1f4;
+    color: #1a3c34;
+    white-space: nowrap;
+  }
+
+  .ph-section-label {
+    font-size: 0.78rem;
+    color: #00c4b4;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  .ph-values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .ph-value-item {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px solid #eef1f4;
+  }
+
+  .ph-value-item .label {
+    display: block;
+    font-size: 0.72rem;
+    color: #868e96;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 4px;
+  }
+
+  .ph-value-item .value {
+    display: block;
+    font-size: 0.98rem;
+    color: #1a3c34;
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  .ph-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 28px;
+    color: #00897b;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .ph-back-link:hover {
+    text-decoration: underline;
+  }
+
+  .ph-error {
+    text-align: center;
+    color: #dc3545;
+    font-weight: 600;
+    padding: 30px;
+  }
+
+  @media (max-width: 576px) {
+    .ph-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+
+<div class="ph-container">
+  <div class="ph-card">
+    {% if error_message %}
+    <p class="ph-error">{{ error_message }}</p>
+    {% else %}
+    <div class="ph-header">
+      <div>
+        <h1>Prediction History</h1>
+        <span class="ph-date"><i class="fa fa-calendar"></i> {{ search_data.created }}</span>
+      </div>
+      <div class="ph-badges">
+        {% if search_data.prediction_accuracy %}
+        <span class="accuracy-pill"><i class="fa fa-bullseye"></i> {{ search_data.prediction_accuracy|floatformat:"2" }}% Accuracy</span>
+        {% endif %}
+        {% if search_data.patient %}
+          {% if search_data.result == "0" %}
+          <span class="status-pill healthy">Healthy</span>
+          {% else %}
+          <span class="status-pill unhealthy">Unhealthy</span>
+          {% endif %}
+        {% else %}
+          {% if search_data.result == "0" %}
+          <span class="status-pill unhealthy">Unhealthy</span>
+          {% else %}
+          <span class="status-pill healthy">Healthy</span>
+          {% endif %}
+        {% endif %}
+      </div>
     </div>
+
+    <div class="ph-section-label">Input Values</div>
+    <div class="ph-values-grid">
+      {% for key, value in main_formatted_values.items %}
+      <div class="ph-value-item">
+        <span class="label">{{ key }}</span>
+        <span class="value">{{ value }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <a href="javascript:history.back()" class="ph-back-link"><i class="fa fa-arrow-left"></i> Back</a>
+    {% endif %}
+  </div>
 </div>
-{% endblock %} 
+{% endblock %}
