@@ -221,9 +221,25 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             background: white;
             transition: all 0.5s ease;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        #login-form,
+        #signup-form {
+            margin: auto 0;
+        }
+
+        .form-section::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .form-section::-webkit-scrollbar-thumb {
+            background: rgba(0, 196, 180, 0.4);
+            border-radius: 10px;
         }
 
         .form-section h3 {
@@ -322,7 +338,7 @@
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
     </style>
 </head>
@@ -384,6 +400,9 @@
                 {% elif error == "invalid_contact" %}
                 <div style="color: red; margin-bottom: 15px; text-align: center;">Please enter a valid 10-digit phone
                     number.</div>
+                {% elif error == "license_required" %}
+                <div style="color: red; margin-bottom: 15px; text-align: center;">Please upload your medical
+                    license/certificate to register as a doctor.</div>
                 {% elif error == "create" %}
                 <div style="color: green; margin-bottom: 15px; text-align: center;">Registration successful! You can now
                     login.</div>
@@ -413,17 +432,33 @@
                         <input type="text" name="add" placeholder="Enter Address" required>
                     </div>
                     <div class="form-group">
-                        <input type="file" name="image" accept="image/*" required>
+                        <div style="flex: 1 1 100%;">
+                            <label style="display: block; margin-bottom: 8px; font-size: 0.9em; color: #1A3C34; font-weight: 600;">
+                                Profile Photo
+                            </label>
+                            <input type="file" name="image" accept="image/*" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <div class="radio-group">
                             <label>User Type:</label>
                             <div>
-                                <input type="radio" name="type" value="Patient" required> Patient
+                                <input type="radio" name="type" id="type-patient" value="Patient" required> Patient
                             </div>
                             <div>
-                                <input type="radio" name="type" value="Doctor" required> Doctor
+                                <input type="radio" name="type" id="type-doctor" value="Doctor" required> Doctor
                             </div>
+                        </div>
+                    </div>
+                    <div class="form-group hidden" id="doctor-docs-group">
+                        <div style="flex: 1 1 100%;">
+                            <label style="display: block; margin-bottom: 8px; font-size: 0.9em; color: #1A3C34; font-weight: 600;">
+                                Medical License / Certificate
+                            </label>
+                            <input type="file" name="license_document" id="license_document" accept=".pdf,.jpg,.jpeg,.png">
+                            <p style="text-align: left; margin-top: 6px; font-size: 0.8em; color: #666;">
+                                Required for doctor accounts. Our admin team will review this document before approving your account.
+                            </p>
                         </div>
                     </div>
                     <button type="submit">Register</button>
@@ -460,6 +495,34 @@
         });
         {% endif %}
 
+        // Show the license/certificate upload only when "Doctor" is selected
+        document.addEventListener('DOMContentLoaded', function () {
+            const typePatient = document.getElementById('type-patient');
+            const typeDoctor = document.getElementById('type-doctor');
+            const doctorDocsGroup = document.getElementById('doctor-docs-group');
+            const licenseInput = document.getElementById('license_document');
+
+            function updateDoctorDocs() {
+                if (typeDoctor.checked) {
+                    doctorDocsGroup.classList.remove('hidden');
+                    licenseInput.setAttribute('required', 'required');
+                } else {
+                    doctorDocsGroup.classList.add('hidden');
+                    licenseInput.removeAttribute('required');
+                }
+            }
+
+            typePatient.addEventListener('change', updateDoctorDocs);
+            typeDoctor.addEventListener('change', updateDoctorDocs);
+        });
+        {% if error == "license_required" %}
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('type-doctor').checked = true;
+            document.getElementById('doctor-docs-group').classList.remove('hidden');
+            document.getElementById('license_document').setAttribute('required', 'required');
+        });
+        {% endif %}
+
         // Add contact number validation
         document.addEventListener('DOMContentLoaded', function () {
             const contactInput = document.querySelector('input[name="contact"]');
@@ -483,19 +546,19 @@
                     contactInput.focus();
                 }
             });
-        });
 
-        const passwordInput = signupForm.querySelector('input[name="pwd"]');
+            const passwordInput = signupForm.querySelector('input[name="pwd"]');
 
-        signupForm.addEventListener('submit', function (e) {
-            const password = passwordInput.value;
-            const passwordPattern = /^(?=.*\d)(?=.*[!@#$%^&*]).{6,}$/;
+            signupForm.addEventListener('submit', function (e) {
+                const password = passwordInput.value;
+                const passwordPattern = /^(?=.*\d)(?=.*[!@#$%^&*]).{6,}$/;
 
-            if (!passwordPattern.test(password)) {
-                e.preventDefault();
-                alert('Password must be at least 6 characters and include a number and a special character (!@#$%^&*).');
-                passwordInput.focus();
-            }
+                if (!passwordPattern.test(password)) {
+                    e.preventDefault();
+                    alert('Password must be at least 6 characters and include a number and a special character (!@#$%^&*).');
+                    passwordInput.focus();
+                }
+            });
         });
 
     </script>

@@ -23,6 +23,7 @@ class Doctor(models.Model):
     doj = models.DateField(null=True)
     dob = models.DateField(null=True)
     image = models.FileField(null=True)
+    license_document = models.FileField(upload_to='doctor_licenses/', null=True, blank=True)
 
     def __str__(self):
         return self.user.username

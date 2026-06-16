@@ -192,6 +192,7 @@
                     <th>Contact</th>
                     <th>Address</th>
                     <th>Category</th>
+                    <th>License</th>
                     <th>Status</th>
                     <th>Assign</th>
                     <th>Action</th>
@@ -207,6 +208,15 @@
                     <td>{{i.contact}}</td>
                     <td>{{i.address}}</td>
                     <td>{{i.category}}</td>
+                    <td>
+                        {% if i.license_document %}
+                        <a href="{{i.license_document.url}}" target="_blank" class="btn btn-info" style="white-space: nowrap;">
+                            <i class="fa fa-file-text-o"></i> Review
+                        </a>
+                        {% else %}
+                        <span style="color:#dc3545; font-size:0.85em;">Not submitted</span>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if i.status == 1 %}
                         <b>Authorized</b>

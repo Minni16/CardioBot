@@ -269,12 +269,18 @@ def Login_User(request):
                 add = request.POST['add']
                 type = request.POST['type']
                 im = request.FILES['image']
-                
+                license_doc = request.FILES.get('license_document')
+
                 # Validate contact number
                 if not con.isdigit() or len(con) != 10:
                     error = "invalid_contact"
                     return render(request, 'login.html', {'error': error, 'show_signup': True})
-                
+
+                # Doctors must submit a license/certificate document for admin review
+                if type == "Doctor" and not license_doc:
+                    error = "license_required"
+                    return render(request, 'login.html', {'error': error, 'show_signup': True})
+
                 # Check if username already exists
                 if User.objects.filter(username=u).exists():
                     error = "username_exists"
@@ -284,7 +290,7 @@ def Login_User(request):
                     if type == "Patient":
                         Patient.objects.create(user=user, contact=con, address=add, image=im, dob=d)
                     else:
-                        Doctor.objects.create(dob=d, image=im, user=user, contact=con, address=add, status=2)
+                        Doctor.objects.create(dob=d, image=im, user=user, contact=con, address=add, status=2, license_document=license_doc)
                     error = "create"
                     return render(request, 'login.html', {'error': error, 'show_signup': True})
             except Exception as e:
