@@ -311,7 +311,11 @@
 
         {% if unhealthy_prob_pct %}
             <span class="confidence-pill {% if 'unhealthy' not in pred and pred != '1' %}pill-healthy{% endif %}">
-                {% if 'unhealthy' in pred or pred == '1' %}⚠️{% else %}✓{% endif %} {{ unhealthy_prob_pct }}% Risk Confidence
+                {% if 'unhealthy' in pred or pred == '1' %}
+                    ⚠️ {{ unhealthy_prob_pct }}% Risk Confidence
+                {% else %}
+                    ✓ {{ healthy_prob_pct }}% Healthy Confidence
+                {% endif %}
             </span>
         {% elif accuracy %}
             <span class="confidence-pill {% if 'unhealthy' not in pred and pred != '1' %}pill-healthy{% endif %}">

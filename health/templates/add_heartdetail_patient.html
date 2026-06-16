@@ -260,7 +260,7 @@
             <div class="heart-form-grid">
                 <div class="heart-form-group">
                     <label>Has any close family member had heart disease?</label>
-                    <select name="family_history" required>
+                    <select name="family_history" id="family_history" required onchange="handleFamilyHistoryChange()">
                         <option value="">Select option</option>
                         <option value="1">Yes</option>
                         <option value="0">No</option>
@@ -357,6 +357,87 @@
                         <option value="3">Very Often (daily)</option>
                     </select>
                 </div>
+                <div class="heart-form-group">
+                    <label>How often do you drink alcohol?</label>
+                    <select name="alcohol_consumption" required>
+                        <option value="">Select frequency</option>
+                        <option value="0">Never</option>
+                        <option value="1">Occasionally (special occasions)</option>
+                        <option value="2">Moderately (1-2 times/week)</option>
+                        <option value="3">Heavily (3+ times/week)</option>
+                    </select>
+                </div>
+                <div class="heart-form-group">
+                    <label>How would you rate your sleep quality?</label>
+                    <select name="sleep_quality" required>
+                        <option value="">Select quality</option>
+                        <option value="0">Good (restful, 7-9 hours)</option>
+                        <option value="1">Fair (somewhat restless or short)</option>
+                        <option value="2">Poor (frequent waking, snoring, or very short)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vitals -->
+        <div class="form-section">
+            <div class="section-title">Vitals</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>Resting heart rate (bpm)</label>
+                    <input type="number" name="resting_heart_rate" min="40" max="180" step="1" required>
+                    <small>Your pulse while calm and seated</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Systolic blood pressure (if known)</label>
+                    <input type="number" name="systolic_bp" min="80" max="220" step="1">
+                    <small>The higher number on a BP reading, e.g. 120. Leave blank if unknown.</small>
+                </div>
+                <div class="heart-form-group">
+                    <label>Waist circumference (cm)</label>
+                    <input type="number" name="waist_circumference" min="40" max="200" step="1" required>
+                    <small>Measured around your belly button</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Symptoms -->
+        <div class="form-section">
+            <div class="section-title">Additional Symptoms</div>
+            <div class="heart-form-grid">
+                <div class="heart-form-group">
+                    <label>Do you experience heart palpitations (a racing, fluttering, or pounding heart)?</label>
+                    <select name="palpitations" required>
+                        <option value="">Select frequency</option>
+                        <option value="0">Never</option>
+                        <option value="1">Rarely</option>
+                        <option value="2">Sometimes</option>
+                        <option value="3">Often</option>
+                    </select>
+                </div>
+                <div class="heart-form-group">
+                    <label>Do you have unexplained swelling in your legs, ankles, or feet?</label>
+                    <select name="swelling_legs" required>
+                        <option value="">Select option</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+                <div class="heart-form-group">
+                    <label>Do you experience dizziness or fainting spells?</label>
+                    <select name="dizziness" required>
+                        <option value="">Select frequency</option>
+                        <option value="0">Never</option>
+                        <option value="1">Rarely</option>
+                        <option value="2">Sometimes</option>
+                        <option value="3">Often</option>
+                    </select>
+                </div>
+                <div class="heart-form-group" id="family_history_age_group" style="display: none;">
+                    <label>At what age did your family member develop heart disease?</label>
+                    <input type="number" name="family_history_age" id="family_history_age" min="1" max="120" step="1">
+                    <small>Earlier onset in a relative is a stronger risk signal</small>
+                </div>
             </div>
         </div>
 
@@ -383,7 +464,25 @@ function handleSmokingChange() {
     }
 }
 
+function handleFamilyHistoryChange() {
+    const familyHistorySelect = document.getElementById('family_history');
+    const ageGroup = document.getElementById('family_history_age_group');
+    const ageInput = document.getElementById('family_history_age');
+
+    if (familyHistorySelect.value === '1') {  // If "Yes" is selected
+        ageGroup.style.display = '';
+        ageInput.required = true;
+    } else {
+        ageGroup.style.display = 'none';
+        ageInput.required = false;
+        ageInput.value = '';
+    }
+}
+
 // Call on page load to set initial state
-document.addEventListener('DOMContentLoaded', handleSmokingChange);
+document.addEventListener('DOMContentLoaded', function () {
+    handleSmokingChange();
+    handleFamilyHistoryChange();
+});
 </script>
 {% endblock %}

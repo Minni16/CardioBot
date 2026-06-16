@@ -1627,6 +1627,28 @@ def view_prediction_history(request, search_id):
                 elif key == 'Stress':
                     stress_map = {0: 'Rarely (less than weekly)', 1: 'Sometimes (1-2 times/week)', 2: 'Often (3-5 times/week)', 3: 'Very Often (daily)'}
                     entry_formatted_values['Stress Level'] = stress_map.get(value, str(value))
+                elif key == 'Resting_Heart_Rate':
+                    entry_formatted_values['Resting Heart Rate'] = f"{value} bpm"
+                elif key == 'Systolic_BP':
+                    entry_formatted_values['Systolic Blood Pressure'] = f"{value} mmHg"
+                elif key == 'Waist_Height_Ratio':
+                    entry_formatted_values['Waist-to-Height Ratio'] = value
+                elif key == 'Alcohol_Consumption':
+                    alcohol_map = {0: 'Never', 1: 'Occasionally', 2: 'Moderately (1-2 times/week)', 3: 'Heavily (3+ times/week)'}
+                    entry_formatted_values['Alcohol Consumption'] = alcohol_map.get(value, str(value))
+                elif key == 'Sleep_Quality':
+                    sleep_map = {0: 'Good', 1: 'Fair', 2: 'Poor'}
+                    entry_formatted_values['Sleep Quality'] = sleep_map.get(value, str(value))
+                elif key == 'Palpitations':
+                    palp_map = {0: 'Never', 1: 'Rarely', 2: 'Sometimes', 3: 'Often'}
+                    entry_formatted_values['Palpitations'] = palp_map.get(value, str(value))
+                elif key == 'Swelling_Legs':
+                    entry_formatted_values['Leg/Ankle Swelling'] = 'Yes' if value == 1 else 'No'
+                elif key == 'Dizziness':
+                    dizzy_map = {0: 'Never', 1: 'Rarely', 2: 'Sometimes', 3: 'Often'}
+                    entry_formatted_values['Dizziness/Fainting'] = dizzy_map.get(value, str(value))
+                elif key == 'Family_History_Age':
+                    entry_formatted_values['Family History Onset Age'] = value if value else 'N/A'
                 # Handle other numerical/string values that just need title casing and direct display
                 elif key in ['patient_name', 'patient_contact', 'age', 'trestbps', 'chol', 'thalach', 'oldpeak', 
                             'height', 'weight', 'bmi', 'time_of_smoking', 'frequency_of_smoking', 'notes']:
@@ -1868,7 +1890,7 @@ def prdict_patient_heart_disease(patient_input_data: dict):
         print("=" * 50)
         print(f"Model Accuracy: {accuracy:.2f}%")
         print(f"Model Type (production): {model_type}")
-        print("Features Used: 19 patient parameters")
+        print(f"Features Used: {len(feature_names)} patient parameters")
         
         # Load and display saved metrics if available
         try:
@@ -1919,6 +1941,38 @@ def prdict_patient_heart_disease(patient_input_data: dict):
             p = float(np.clip(p, 1e-9, 1 - 1e-9))
             return float(np.log(p / (1 - p)))
 
+        # Vitals where the model's "distance from dataset average" impact can
+        # mislabel a clinically-normal reading (e.g. RHR 92 is within the
+        # AHA-normal 60-100 range but above the synthetic dataset's mean of
+        # ~70, so the model-relative delta alone reads as "moderate risk").
+        # Override the displayed impact for these two using AHA reference
+        # bands instead, so the badge reflects actual clinical normalcy.
+        CLINICAL_VITAL_BANDS = {
+            # (lower_inclusive, upper_exclusive, impact_value)
+            'Resting_Heart_Rate': [
+                (0, 50, 0.20),            # bradycardia
+                (50, 100, 0.0),           # AHA normal resting range
+                (100, 110, 0.20),         # mildly elevated
+                (110, float('inf'), 0.40),  # tachycardia
+            ],
+            'Systolic_BP': [
+                (0, 90, 0.20),             # hypotension
+                (90, 120, 0.0),            # AHA normal
+                (120, 130, 0.15),          # elevated
+                (130, 140, 0.20),          # stage 1 hypertension
+                (140, float('inf'), 0.40),  # stage 2 hypertension
+            ],
+        }
+
+        def _clinical_band_impact(feature_name, value):
+            bands = CLINICAL_VITAL_BANDS.get(feature_name)
+            if not bands or value is None:
+                return None
+            for lo_bound, hi_bound, impact_value in bands:
+                if lo_bound <= value < hi_bound:
+                    return impact_value
+            return None
+
         if model_type == 'RandomForest' and hasattr(model, 'feature_importances_'):
             importances = model.feature_importances_
             total_imp = importances.sum() if importances.sum() > 0 else 1.0
@@ -1948,6 +2002,9 @@ def prdict_patient_heart_disease(patient_input_data: dict):
                         X_single.iloc[0, name_to_idx[gf]] = patient_input_data.get(gf, 0)
                 p_single = float(model.predict_proba(X_single)[0][1])
                 direction_impact = _lo(p_single) - neutral_lo
+                clinical_override = _clinical_band_impact(feature_name, original_val)
+                if clinical_override is not None:
+                    direction_impact = clinical_override
                 feature_impacts.append({
                     'feature': feature_name,
                     'value': original_val,
@@ -2052,10 +2109,13 @@ def add_heartdetail_patient(request):
         time_of_smoking = int(request.POST.get('time_of_smoking', 0))
         frequency_of_smoking = int(request.POST.get('frequency_of_smoking', 0))
         
-        high_blood_pressure = 1 if request.POST.get('hypertension', '0') == '1' else 0
-        diabetes = 1 if int(request.POST.get('diabetes', 2)) == 1 else 0
-        high_cholesterol = 1 if request.POST.get('high_cholesterol', '0') == '1' else 0
+        # Pass through the patient's actual answer (0=No, 1=Yes, 2=Not sure) rather
+        # than collapsing "not sure" to "No" — the model is trained on all three values.
+        high_blood_pressure = int(request.POST.get('hypertension', 0))
+        diabetes = int(request.POST.get('diabetes', 0))
+        high_cholesterol = int(request.POST.get('high_cholesterol', 0))
         family_history = int(request.POST.get('family_history', 0))
+        family_history_age = int(request.POST.get('family_history_age', 0) or 0) if family_history == 1 else 0
 
         chest_pain = int(request.POST.get('chest_pain', 0))
         chest_pain_severity = int(request.POST.get('chest_pain_severity', 0))
@@ -2065,7 +2125,21 @@ def add_heartdetail_patient(request):
 
         exercise = int(request.POST.get('physical_activity', 0))
         fatty_food = int(request.POST.get('diet_habits', 0))
-        stress = int(request.POST.get('stress_level', 0)) 
+        stress = int(request.POST.get('stress_level', 0))
+        alcohol_consumption = int(request.POST.get('alcohol_consumption', 0))
+        sleep_quality = int(request.POST.get('sleep_quality', 0))
+
+        resting_heart_rate = int(request.POST.get('resting_heart_rate', 0))
+        systolic_bp_raw = request.POST.get('systolic_bp', '')
+        # Patients may not know their blood pressure reading; fall back to a
+        # neutral value (typical resting systolic) when left blank.
+        systolic_bp = int(systolic_bp_raw) if systolic_bp_raw else 120
+        waist_circumference = float(request.POST.get('waist_circumference', 0))
+        waist_height_ratio = round(waist_circumference / height, 3) if height > 0 else 0
+
+        palpitations = int(request.POST.get('palpitations', 0))
+        swelling_legs = int(request.POST.get('swelling_legs', 0))
+        dizziness = int(request.POST.get('dizziness', 0))
 
         # Create a dictionary with the exact feature names expected by the model
         patient_input_data_for_prediction = {
@@ -2088,6 +2162,15 @@ def add_heartdetail_patient(request):
             'Exercise': exercise,
             'Fatty_Food': fatty_food,
             'Stress': stress,
+            'Resting_Heart_Rate': resting_heart_rate,
+            'Systolic_BP': systolic_bp,
+            'Waist_Height_Ratio': waist_height_ratio,
+            'Alcohol_Consumption': alcohol_consumption,
+            'Sleep_Quality': sleep_quality,
+            'Palpitations': palpitations,
+            'Swelling_Legs': swelling_legs,
+            'Dizziness': dizziness,
+            'Family_History_Age': family_history_age,
         }
         
         print("Patient model input dictionary (matching trained model features):", patient_input_data_for_prediction)
@@ -2179,6 +2262,7 @@ def add_heartdetail_patient(request):
             'is_patient': True,
             'pred_value': int(pred_value),
             'unhealthy_prob_pct': round(float(pred_proba[1]) * 100, 1),
+            'healthy_prob_pct': round(float(pred_proba[0]) * 100, 1),
         })
         
     return render(request, 'add_heartdetail_patient.html', {'patient_name': patient_name, 'patient_age': patient_age})
